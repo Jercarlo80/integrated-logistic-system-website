@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Archive, Boxes, Building2, Database, ShieldCheck } from "lucide-react";
 import MaterilTable, { MaterilGroup, MaterilItem } from "@/app/component/materiltable";
 import { dummyMaterilData } from "@/app/dummyData/dummymateriildata";
+import TabMaterial from "@/app/component/tabmateril"; // sesuaikan path import
 
 export type TreeNode = {
   id: string;
@@ -68,15 +69,26 @@ export default function DataKoleksiMaterial({
 
   const fullData = dummyMaterilData;
 
+  // Filter data berdasarkan node, main tab, dan sub tab
   const filteredData = useMemo(() => {
-    if (!activeNode) return fullData;
+    if (!activeNode) return [];
+
+    // Tentukan nilai target dari tab aktif
+    const targetTipe = activeMainTab === "aset" ? "1" : "2";
+    const targetJenis = activeSubTab === "bmn" ? "1" : "2";
+
     return fullData
       .map((group) => ({
         ...group,
-        items: group.items.filter((item) => isItemMatchNode(item, activeNode.code)),
+        items: group.items.filter(
+          (item) =>
+            isItemMatchNode(item, activeNode.code) &&
+            item.tipe === targetTipe &&
+            item.jenis === targetJenis
+        ),
       }))
       .filter((group) => group.items.length > 0);
-  }, [fullData, activeNode]);
+  }, [fullData, activeNode, activeMainTab, activeSubTab]);
 
   const initialKodefikasi = useMemo(
     () => buildKodefikasiFromNode(activeNode),
@@ -115,10 +127,41 @@ export default function DataKoleksiMaterial({
 
   const MainIcon = currentMainTab.icon;
 
+  // Konfigurasi untuk komponen TabMaterial
+  const mainTabsConfig = [
+    {
+      key: "aset",
+      label: "Aset Tetap",
+      description: "Inventaris permanen",
+      icon: Building2,
+    },
+    {
+      key: "Habis Pakai",
+      label: "Habis Pakai",
+      description: "Material operasional",
+      icon: Archive,
+    },
+  ];
+
+  const subTabsConfig = [
+    {
+      key: "bmn",
+      label: "BMN",
+      description: "Barang Milik Negara yang terdaftar dalam sistem.",
+      badge: "Terintegrasi dengan identifikasi struktur organisasi.",
+    },
+    {
+      key: "nonbmn",
+      label: "Non BMN",
+      description: "Material non inventaris atau non kepemilikan negara.",
+      badge: "Data non-BMN untuk kebutuhan administrasi internal.",
+    },
+  ];
+
   return (
-    <div className="overflow-hidden rounded-2xl md:rounded-3xl border border-cyan-500/10 bg-gradient-to-b from-[#07152b] to-[#08111f] shadow-[0_0_0_1px_rgba(34,211,238,0.04)]">
+    <div className="overflow-hidden rounded-2xl md:rounded-3xl border border-cyan-500/10 bg-linear-to-b from-[#07152b] to-[#08111f] shadow-[0_0_0_1px_rgba(34,211,238,0.04)]">
       {/* HEADER - Responsive */}
-      <div className="border-b border-white/5 bg-gradient-to-r from-cyan-500/5 via-slate-900 to-cyan-500/5 px-4 py-4 md:px-6 md:py-5">
+      <div className="border-b border-white/5 bg-linear-to-r from-cyan-500/5 via-slate-900 to-cyan-500/5 px-4 py-4 md:px-6 md:py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-2 text-cyan-400">
@@ -170,81 +213,25 @@ export default function DataKoleksiMaterial({
         </div>
       </div>
 
-      {/* MAIN TAB - Responsive untuk mobile */}
-      <div className="flex border-b border-white/5 bg-[#081426]">
-        <button
-          onClick={() => setActiveMainTab("aset")}
-          className={`group relative flex flex-1 items-center justify-center gap-2 md:gap-3 px-2 py-3 md:px-5 md:py-5 transition-all duration-300 ${
-            activeMainTab === "aset"
-              ? "bg-cyan-500/10 text-cyan-300"
-              : "text-slate-500 hover:bg-white/[0.02] hover:text-slate-300"
-          }`}
-        >
-          <Building2 size={16} className="md:size-[18px]" />
-          <div className="text-left">
-            <div className="text-xs md:text-sm font-semibold">Aset Tetap</div>
-            <div className="hidden sm:block text-[10px] md:text-[11px] text-slate-500">
-              Inventaris permanen
-            </div>
-          </div>
-          {activeMainTab === "aset" && (
-            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-cyan-400" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveMainTab("Habis Pakai")}
-          className={`group relative flex flex-1 items-center justify-center gap-2 md:gap-3 px-2 py-3 md:px-5 md:py-5 transition-all duration-300 ${
-            activeMainTab === "Habis Pakai"
-              ? "bg-cyan-500/10 text-cyan-300"
-              : "text-slate-500 hover:bg-white/[0.02] hover:text-slate-300"
-          }`}
-        >
-          <Archive size={16} className="md:size-[18px]" />
-          <div className="text-left">
-            <div className="text-xs md:text-sm font-semibold">Habis Pakai</div>
-            <div className="hidden sm:block text-[10px] md:text-[11px] text-slate-500">
-              Material operasional
-            </div>
-          </div>
-          {activeMainTab === "Habis Pakai" && (
-            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-cyan-400" />
-          )}
-        </button>
-      </div>
-
-      {/* SUB TAB - Responsive */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-white/5 bg-[#07111f] px-4 py-3 md:px-6 md:py-4">
-        <button
-          onClick={() => setActiveSubTab("bmn")}
-          className={`rounded-lg md:rounded-xl px-3 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm font-medium transition-all duration-300 ${
-            activeSubTab === "bmn"
-              ? "border border-cyan-400/30 bg-cyan-500/15 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.08)]"
-              : "border border-transparent bg-white/[0.03] text-slate-400 hover:border-white/10 hover:bg-white/[0.05] hover:text-slate-200"
-          }`}
-        >
-          BMN
-        </button>
-        <button
-          onClick={() => setActiveSubTab("nonbmn")}
-          className={`rounded-lg md:rounded-xl px-3 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm font-medium transition-all duration-300 ${
-            activeSubTab === "nonbmn"
-              ? "border border-cyan-400/30 bg-cyan-500/15 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.08)]"
-              : "border border-transparent bg-white/[0.03] text-slate-400 hover:border-white/10 hover:bg-white/[0.05] hover:text-slate-200"
-          }`}
-        >
-          Non BMN
-        </button>
-      </div>
+      {/* TAB COMPONENT - Reusable */}
+      <TabMaterial
+        mainTabs={mainTabsConfig}
+        activeMainTab={activeMainTab}
+        onMainTabChange={(key) => setActiveMainTab(key as MainTab)}
+        subTabs={subTabsConfig}
+        activeSubTab={activeSubTab}
+        onSubTabChange={(key) => setActiveSubTab(key as SubTab)}
+      />
 
       {/* CONTENT */}
       <div className="p-3 md:p-6">
-        <div className="overflow-hidden rounded-2xl md:rounded-3xl border border-cyan-500/10 bg-gradient-to-br from-[#0b1d35] to-[#081321]">
+        <div className="overflow-hidden rounded-2xl md:rounded-3xl border border-cyan-500/10 bg-linear-to-br from-[#0b1d35] to-[#081321]">
           {/* TOP SECTION - Responsive */}
           <div className="border-b border-white/5 p-4 md:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-3 md:gap-4">
                 <div className="flex h-10 w-10 md:h-14 md:w-14 items-center justify-center rounded-xl md:rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
-                  <MainIcon size={20} className="md:size-[26px]" />
+                  <MainIcon size={20} className="md:size-6.5" />
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2 md:gap-3">
@@ -280,7 +267,7 @@ export default function DataKoleksiMaterial({
               <div className="text-[9px] md:text-xs uppercase tracking-[0.15em] md:tracking-[0.2em] text-slate-500">
                 Struktur Aktif
               </div>
-              <div className="mt-2 md:mt-3 text-base md:text-lg font-semibold text-white break-words">
+              <div className="mt-2 md:mt-3 text-base md:text-lg font-semibold text-white wrap-break-word">
                 {activeNode.title}
               </div>
               <div className="mt-1 md:mt-2 text-xs md:text-sm text-slate-400">

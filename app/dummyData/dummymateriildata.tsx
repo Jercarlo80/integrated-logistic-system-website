@@ -1,12 +1,19 @@
 // app/dummyData/dummymateriildata.ts
 import { MaterilGroup } from "@/app/component/materiltable";
 
+// ======================== GAMBAR PLACEHOLDER ========================
+// Menggunakan gambar dari picsum (public domain) agar selalu tampil
+const GAMBAR_BUC = "https://picsum.photos/id/1/200/200";      // gambar untuk BUC
+const GAMBAR_CODAN = "https://picsum.photos/id/2/200/200";    // gambar untuk Codan (akan diduplikasi)
+const GAMBAR_MODEM = "https://picsum.photos/id/3/200/200";    // gambar untuk modem (akan diduplikasi)
+const GAMBAR_LAIN = "https://picsum.photos/id/4/200/200";     // gambar untuk item lain
+
 export const dummyMaterilData: MaterilGroup[] = [
   {
     romawi: "I",
     title: "BMN MATKOMLEK SATKOMLEK TNI",
     items: [
-      // 1. Block Up Converter (BUC) C-Band
+      // 1. Block Up Converter (BUC) C-Band - dengan gambar (pertama kali muncul)
       {
         bag: "1",
         unsr: "3",
@@ -19,7 +26,7 @@ export const dummyMaterilData: MaterilGroup[] = [
         subKel: "1",
         subSubKel: "5",
         jenis: "1",
-        tipe: "1",
+        tipe: "2",
         urut: "1",
         name: "Block Up Converter (BUC) C-Band",
         merkType: "NJT5762N",
@@ -33,12 +40,12 @@ export const dummyMaterilData: MaterilGroup[] = [
         rr: "0",
         rb: "1",
         persen: "0",
-        keterangan: "",
-        gambar: "",
+        keterangan: "Peralatan Jaringan",
+        gambar: GAMBAR_BUC, // thumbnail akan tampil
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 2. Block Up Converter (BUC) Codan (unit 1)
+      // 2. Block Up Converter (BUC) Codan (unit 1) - dengan gambar (pertama kali GAMBAR_CODAN)
       {
         bag: "1",
         unsr: "3",
@@ -66,11 +73,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "1",
         persen: "0",
         keterangan: "",
-        gambar: "",
+        gambar: GAMBAR_CODAN, // thumbnail akan tampil (pertama kali)
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 3. Block Up Converter (BUC) Codan (unit 2)
+      // 3. Block Up Converter (BUC) Codan (unit 2) - dengan gambar SAMA dengan item 2
       {
         bag: "1",
         unsr: "3",
@@ -98,11 +105,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "1",
         persen: "0",
         keterangan: "",
-        gambar: "",
+        gambar: GAMBAR_CODAN, // duplikat, akan tampil tombol eye
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 4. Bird RF Wattmeter
+      // 4. Bird RF Wattmeter - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -130,11 +137,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "100",
         keterangan: "Peralatan Jaringan",
-        gambar: "",
+        gambar: "", // kosong -> tampil "-"
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 5. Modem Satelit CDM570 AL (5 unit contoh)
+      // 5. Modem Satelit CDM570 AL (5 unit) - dengan gambar GAMBAR_MODEM (pertama kali)
       {
         bag: "1",
         unsr: "3",
@@ -162,11 +169,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "50",
         keterangan: "Modem satelit kelas berat untuk jaringan telekomunikasi",
-        gambar: "",
+        gambar: GAMBAR_MODEM, // thumbnail untuk unit pertama dari item ini
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 6. Modem Satelit CDM600 AL (4 unit)
+      // 6. Modem Satelit CDM600 AL (4 unit) - dengan gambar SAMA dengan item 5
       {
         bag: "1",
         unsr: "3",
@@ -194,11 +201,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "50",
         keterangan: "Modem satelit kelas berat",
-        gambar: "",
+        gambar: GAMBAR_MODEM, // duplikat, akan tampil tombol eye untuk semua unit baris ini
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 7. Modem Spacenet (2 unit)
+      // 7. Modem Spacenet (2 unit) - dengan gambar GAMBAR_LAIN (pertama kali)
       {
         bag: "1",
         unsr: "3",
@@ -226,11 +233,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "50",
         keterangan: "Perangkat keras jaringan satelit VSAT",
-        gambar: "",
+        gambar: GAMBAR_LAIN, // thumbnail
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 8. Wireless PCI Card
+      // 8. Wireless PCI Card - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -258,11 +265,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "75",
         keterangan: "Wireless G Desktop Adapter",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 9. Wireless Access Point
+      // 9. Wireless Access Point - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -290,11 +297,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "75",
         keterangan: "Titik akses nirkabel",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 10. Multimeter Uni-T (6 unit)
+      // 10. Multimeter Uni-T (6 unit) - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -312,12 +319,8 @@ export const dummyMaterilData: MaterilGroup[] = [
         name: "Multimeter Uni-T",
         merkType: "UNI-T",
         serialNumbers: [
-          "C173996468",
-          "C181224707",
-          "C181224700",
-          "C181224701",
-          "C173996477",
-          "C17396477",
+          "C173996468", "C181224707", "C181224700",
+          "C181224701", "C173996477", "C17396477",
         ],
         negaraPembuat: "China",
         tahunPembuatan: "2020",
@@ -329,11 +332,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "100",
         keterangan: "Alat Ukur Universal",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 11. Telephone (PABX) Panasonic (16 unit)
+      // 11. Telephone (PABX) Panasonic (16 unit) - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -351,22 +354,10 @@ export const dummyMaterilData: MaterilGroup[] = [
         name: "Telephone (PABX)",
         merkType: "Panasonic",
         serialNumbers: [
-          "8AAKB002352",
-          "8AAKB002486",
-          "8AAKB002366",
-          "8AAKB002422",
-          "8AAKB002457",
-          "8AAKB002360",
-          "8AAKB002351",
-          "8AAKB002435",
-          "8AAKB003146",
-          "8AAKB002399",
-          "8AAKB002474",
-          "8AAKB002357",
-          "8AAKB002411",
-          "8AAKB002433",
-          "8AAKB002476",
-          "8AAKB002410",
+          "8AAKB002352", "8AAKB002486", "8AAKB002366", "8AAKB002422",
+          "8AAKB002457", "8AAKB002360", "8AAKB002351", "8AAKB002435",
+          "8AAKB003146", "8AAKB002399", "8AAKB002474", "8AAKB002357",
+          "8AAKB002411", "8AAKB002433", "8AAKB002476", "8AAKB002410",
         ],
         negaraPembuat: "Jepang",
         tahunPembuatan: "2016",
@@ -378,11 +369,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "75",
         keterangan: "",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 12. Laptop Notebook Axioo (4 unit)
+      // 12. Laptop Notebook Axioo (4 unit) - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -400,10 +391,8 @@ export const dummyMaterilData: MaterilGroup[] = [
         name: "Laptop Notebook",
         merkType: "Axioo",
         serialNumbers: [
-          "NKW217CUQDC2F01429",
-          "NKW217CUQDC2F05953",
-          "NKW217CUQDC2F00888",
-          "NKW217CUQDC2F01465",
+          "NKW217CUQDC2F01429", "NKW217CUQDC2F05953",
+          "NKW217CUQDC2F00888", "NKW217CUQDC2F01465",
         ],
         negaraPembuat: "Indonesia",
         tahunPembuatan: "2021",
@@ -415,11 +404,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "1",
         persen: "25",
         keterangan: "Personal Computer (PC)",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 13. Hub Switch GrandStream (4 unit)
+      // 13. Hub Switch GrandStream (4 unit) - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -437,10 +426,8 @@ export const dummyMaterilData: MaterilGroup[] = [
         name: "Hub Switch",
         merkType: "GrandStream",
         serialNumbers: [
-          "21AVUK79H21ACFEF4",
-          "21AVUK79H51B91968",
-          "21AVUK79H21ACFFAO",
-          "21AVUK79H21ACFFAA",
+          "21AVUK79H21ACFEF4", "21AVUK79H51B91968",
+          "21AVUK79H21ACFFAO", "21AVUK79H21ACFFAA",
         ],
         negaraPembuat: "USA",
         tahunPembuatan: "2019",
@@ -452,11 +439,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "60",
         keterangan: "",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 14. CCTV
+      // 14. CCTV - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -484,11 +471,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "70",
         keterangan: "Alat Kantor Lainnya",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 15. LCD Projector
+      // 15. LCD Projector - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -516,11 +503,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "60",
         keterangan: "",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 16. Quad Video Processor Server AV (2 unit)
+      // 16. Quad Video Processor Server AV (2 unit) - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -548,11 +535,11 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "65",
         keterangan: "Peralatan Studio Video dan Film",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },
-      // 17. Antena UHF Stationary TV (5 unit)
+      // 17. Antena UHF Stationary TV (5 unit) - tanpa gambar
       {
         bag: "1",
         unsr: "3",
@@ -570,11 +557,8 @@ export const dummyMaterilData: MaterilGroup[] = [
         name: "Antena UHF Stationary TV",
         merkType: "Starcom",
         serialNumbers: [
-          "I120861901219",
-          "I120861901217",
-          "I120861901218",
-          "I120861901216",
-          "I120861901116",
+          "I120861901219", "I120861901217", "I120861901218",
+          "I120861901216", "I120861901116",
         ],
         negaraPembuat: "China",
         tahunPembuatan: "2020",
@@ -586,7 +570,7 @@ export const dummyMaterilData: MaterilGroup[] = [
         rb: "0",
         persen: "75",
         keterangan: "Peralatan Antena UHF",
-        gambar: "",
+        gambar: "", // kosong
         updateTanggal: "2025-01-15",
         konseptor: "Admin",
       },

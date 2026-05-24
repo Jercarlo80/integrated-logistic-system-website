@@ -128,8 +128,8 @@ export default function Sidebar({
               collapsed={collapsed}
               label="Proses Kodefikasi"
               icon={Settings2}
-              active={pathname === "/proses-kodefikasi"}
-              onClick={() => handleNavigate("/proses-kodefikasi")}
+              active={pathname === "/proseskodefikasi"}
+              onClick={() => handleNavigate("/proseskodefikasi")}
             />
             <MenuItem
               collapsed={collapsed}

@@ -351,7 +351,7 @@ export default function ButtonIdentifikasi({
         </button>
 
         {isDropdownOpen && (
-          <div className="absolute left-0 z-50 mt-2 w-full min-w-[300px] rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+          <div className="absolute left-0 z-50 mt-2 w-full min-w-75 rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
             <div className="max-h-80 overflow-y-auto p-1">
               {menuItems.map((root) => {
                 const hasChildren = root.children && root.children.length > 0;

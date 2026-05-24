@@ -169,7 +169,6 @@ export function parseTree(raw: string): TreeNode[] {
   }
 
   const sorted = sortTree(root);
-  // Hitung depth berdasarkan posisi tree (root depth = 1)
   return assignDisplayDepth(sorted, 1);
 }
 

@@ -162,12 +162,11 @@ export default function CardIdentifikasi() {
   const totalRoot = data.length;
 
   return (
-    <section className="relative w-full overflow-hidden rounded-[24px] border border-slate-800 bg-[#020617] p-3 shadow-[0_20px_80px_rgba(0,0,0,0.55)] sm:p-5 lg:rounded-[30px]">
+    <section className="relative w-full overflow-hidden rounded-3xl border border-slate-800 bg-[#020617] p-3 shadow-[0_20px_80px_rgba(0,0,0,0.55)] sm:p-5 lg:rounded-[30px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.12),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.08),transparent_25%)]" />
-
       <div className="relative z-10">
-        <div className="mb-5 overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 shadow-2xl">
-          <div className="border-b border-slate-800 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 px-4 py-5 sm:px-6">
+        <div className="mb-5 overflow-hidden rounded-3xl border border-slate-800 bg-linear-to-br from-slate-900 via-slate-950 to-slate-900 shadow-2xl">
+          <div className="border-b border-slate-800 bg-linear-to-r from-cyan-500/10 to-blue-500/10 px-4 py-5 sm:px-6">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <div className="max-w-3xl">
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-[11px] font-semibold tracking-[0.15em] text-cyan-300 sm:text-xs">

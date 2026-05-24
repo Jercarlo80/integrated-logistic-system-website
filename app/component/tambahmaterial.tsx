@@ -16,7 +16,6 @@ import {
   FaCalendarAlt,
   FaUserCog,
   FaQrcode,
-  FaTags,
 } from "react-icons/fa";
 import QRCode from "qrcode";
 import { MaterilItem } from "./materiltable";
@@ -41,6 +40,8 @@ type Props = {
     subSubKel?: string;
   };
   onBack?: () => void;
+  defaultJenis?: string; // "1" untuk BMN, "2" untuk Non BMN
+  defaultTipe?: string; // "1" untuk Aset Tetap, "2" untuk Habis Pakai
 };
 
 type SubComponent = {
@@ -96,7 +97,6 @@ const getYearOptions = () => {
   return years;
 };
 
-// Semua kode sekarang integer, default "0"
 const getDefaultKode = () => "0";
 
 const hitungPersen = (b: number, rr: number, rb: number): string => {
@@ -105,7 +105,6 @@ const hitungPersen = (b: number, rr: number, rb: number): string => {
   return Math.round((b / total) * 100).toString();
 };
 
-// Daftar field yang harus berupa integer
 const integerFields = [
   "bag",
   "unsr",
@@ -127,6 +126,8 @@ export default function TambahMateriilPage({
   initialData,
   initialKodefikasi,
   onBack,
+  defaultJenis,
+  defaultTipe,
 }: Props) {
   const router = useRouter();
   const [items, setItems] = useState<ItemState[]>([]);
@@ -138,9 +139,6 @@ export default function TambahMateriilPage({
   const yearOptions = getYearOptions();
   const today = new Date().toISOString().slice(0, 10);
 
-  // Styling yang ditingkatkan
-  const inputClass =
-    "w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all duration-200 focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20 hover:shadow-sm";
   const inputNumberClass =
     "w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all duration-200 focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20 hover:shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
   const inputSoftClass =
@@ -163,8 +161,8 @@ export default function TambahMateriilPage({
     kel: initialKodefikasi?.kel ?? getDefaultKode(),
     subKel: initialKodefikasi?.subKel ?? getDefaultKode(),
     subSubKel: initialKodefikasi?.subSubKel ?? getDefaultKode(),
-    jenis: getDefaultKode(),
-    tipe: getDefaultKode(),
+    jenis: defaultJenis ?? getDefaultKode(),
+    tipe: defaultTipe ?? getDefaultKode(),
     urut: getDefaultKode(),
     name: "",
     merkType: "",
@@ -185,7 +183,6 @@ export default function TambahMateriilPage({
     ...overrides,
   });
 
-  // Helper untuk memastikan nilai integer pada field tertentu
   const ensureInteger = (value: any): string => {
     const intVal = parseInt(String(value), 10);
     return isNaN(intVal) ? "0" : intVal.toString();
@@ -237,7 +234,7 @@ export default function TambahMateriilPage({
     } else {
       setItems([createItemFromKodefikasi()]);
     }
-  }, [initialData]);
+  }, [initialData, defaultJenis, defaultTipe]);
 
   useEffect(() => {
     setSerialNumbers((prev) => {
@@ -334,7 +331,6 @@ export default function TambahMateriilPage({
       const updated = [...prev];
       const item = { ...updated[index] };
 
-      // Konversi integer untuk field tertentu
       let processedValue = value;
       if (integerFields.includes(field)) {
         processedValue = ensureInteger(value);
@@ -459,7 +455,6 @@ export default function TambahMateriilPage({
   };
 
   const handleSubmit = () => {
-    // Romawi dan title dihilangkan dari form, dikirim kosong
     onSubmit("", "", items as MaterilItem[]);
   };
 
@@ -471,12 +466,11 @@ export default function TambahMateriilPage({
     }
   };
 
-  // Menghitung total unit barang
   const totalUnits = items.reduce((sum, item) => sum + item.jumlah, 0);
 
   return (
     <div className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
-      {/* Header dengan ringkasan */}
+      {/* Header */}
       <div className="relative border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 px-5 py-4 md:px-7 md:py-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
@@ -500,10 +494,9 @@ export default function TambahMateriilPage({
         </div>
       </div>
 
-      {/* Form body dengan scroll halus */}
+      {/* Form body */}
       <div className="max-h-[calc(100vh-240px)] overflow-y-auto bg-slate-50/70 dark:bg-gray-900/50 px-4 py-5 md:px-7 md:py-6 custom-scrollbar">
         <div className="space-y-6">
-          {/* Items */}
           {items.map((item, idx) => (
             <div
               key={idx}
@@ -526,14 +519,12 @@ export default function TambahMateriilPage({
                 <button
                   onClick={() => removeItem(idx)}
                   className="inline-flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-3.5 py-2 text-sm font-medium text-red-600 dark:text-red-400 transition-all hover:border-red-300 dark:hover:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 hover:shadow-sm"
-                  title="Hapus item"
                 >
                   <FaTrash /> Hapus
                 </button>
               </div>
 
               <div className="space-y-6 px-4 py-5 md:px-5 md:py-6">
-                {/* Identifikasi */}
                 <ButtonIdentifikasi
                   item={item}
                   updateItem={updateItem}
@@ -612,9 +603,8 @@ export default function TambahMateriilPage({
                       idx={idx}
                     />
                     <ButtonTipe item={item} updateItem={updateItem} idx={idx} />
-                    {/* Input Urutan */}
                     <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-gray-300">
-                      <FaTags /> Urutan
+                      Urutan
                     </div>
                     <input
                       type="number"
@@ -686,7 +676,7 @@ export default function TambahMateriilPage({
 
                 {/* Satuan & Kondisi */}
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/50 p-4 transition-all hover:shadow-sm">
+                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/50 p-4">
                     <label className={labelClass}>Satuan</label>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                       <input
@@ -696,14 +686,14 @@ export default function TambahMateriilPage({
                         onChange={(e) =>
                           updateItem(idx, "jumlah", Number(e.target.value))
                         }
-                        className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20 sm:w-28"
+                        className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm sm:w-28"
                       />
                       <select
                         value={item.satuan}
                         onChange={(e) =>
                           updateItem(idx, "satuan", e.target.value)
                         }
-                        className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20 sm:flex-1"
+                        className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm sm:flex-1"
                       >
                         <option value="unit">Unit</option>
                         <option value="buah">Buah</option>
@@ -711,7 +701,7 @@ export default function TambahMateriilPage({
                       </select>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/50 p-4 transition-all hover:shadow-sm">
+                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/50 p-4">
                     <label className={labelClass}>Kondisi</label>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                       <input
@@ -742,7 +732,7 @@ export default function TambahMateriilPage({
                         placeholder="%"
                         value={item.persen}
                         readOnly
-                        className="cursor-not-allowed rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-700 dark:text-gray-300 outline-none"
+                        className="cursor-not-allowed rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm"
                       />
                     </div>
                   </div>
@@ -750,12 +740,12 @@ export default function TambahMateriilPage({
 
                 {/* Serial Numbers */}
                 {item.jumlah > 0 && (
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 transition-all hover:shadow-sm">
+                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <label className={labelClass}>
                         <FaBarcode /> Nomor Seri per Unit
                       </label>
-                      <span className="rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold text-slate-600 dark:text-gray-400">
+                      <span className="rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold">
                         {item.jumlah} input
                       </span>
                     </div>
@@ -850,9 +840,9 @@ export default function TambahMateriilPage({
 
                 {/* QR Item preview */}
                 {(qrItems[idx]?.[0] || qrSets) && (
-                  <div className="flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-4 transition-all">
+                  <div className="flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-4">
                     {qrItems[idx]?.[0] && (
-                      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 shadow-sm hover:shadow-md transition-all">
+                      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 shadow-sm">
                         <img
                           src={qrItems[idx][0]}
                           className="h-14 w-14 rounded-xl object-contain"
@@ -865,17 +855,17 @@ export default function TambahMateriilPage({
 
                 {/* Set components */}
                 {item.satuan === "set" && item.subGroups && (
-                  <div className="space-y-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-4 md:p-5 transition-all">
+                  <div className="space-y-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-4 md:p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <h4 className="text-sm font-semibold flex items-center gap-2">
                           <FaBoxes /> Komponen dalam Set
                         </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500">
                           Kelola kelompok komponen dan nomor seri masing-masing.
                         </p>
                       </div>
-                      <span className="rounded-full bg-white dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold text-slate-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                      <span className="rounded-full bg-white dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold border">
                         {item.subGroups.length} grup
                       </span>
                     </div>
@@ -883,15 +873,15 @@ export default function TambahMateriilPage({
                       {item.subGroups.map((group, gIdx) => (
                         <div
                           key={gIdx}
-                          className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all"
+                          className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm"
                         >
-                          <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/50 px-4 py-3 md:flex-row md:items-center md:justify-between">
-                            <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                          <div className="flex flex-col gap-3 border-b bg-slate-50 dark:bg-gray-800/50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                            <h5 className="text-sm font-semibold">
                               {group.label}
                             </h5>
                             <button
                               onClick={() => addComponentToGroup(idx, gIdx)}
-                              className="inline-flex items-center gap-2 rounded-xl border border-[#CFE7DA] dark:border-[#2A5A48] bg-[#EAF4EF] dark:bg-[#1E3A2F] px-3 py-2 text-sm font-medium text-[#328E6E] dark:text-[#3BAF87] transition-all hover:bg-[#dff0e7] dark:hover:bg-[#2A4D3E] hover:shadow-sm"
+                              className="inline-flex items-center gap-2 rounded-xl border border-[#CFE7DA] dark:border-[#2A5A48] bg-[#EAF4EF] dark:bg-[#1E3A2F] px-3 py-2 text-sm font-medium text-[#328E6E] dark:text-[#3BAF87] hover:bg-[#dff0e7] dark:hover:bg-[#2A4D3E]"
                             >
                               <FaPlus /> Tambah Komponen
                             </button>
@@ -902,7 +892,7 @@ export default function TambahMateriilPage({
                               return (
                                 <div
                                   key={cIdx}
-                                  className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-3 md:grid-cols-12 md:items-center transition-all hover:bg-slate-100 dark:hover:bg-gray-800/50"
+                                  className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-3 md:grid-cols-12 md:items-center"
                                 >
                                   <input
                                     placeholder="Nama Komponen"
@@ -916,7 +906,7 @@ export default function TambahMateriilPage({
                                         e.target.value,
                                       )
                                     }
-                                    className="md:col-span-5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20"
+                                    className="md:col-span-5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
                                   />
                                   <input
                                     type="number"
@@ -931,7 +921,7 @@ export default function TambahMateriilPage({
                                         Number(e.target.value),
                                       )
                                     }
-                                    className="md:col-span-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20"
+                                    className="md:col-span-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
                                   />
                                   <input
                                     placeholder="Serial"
@@ -945,13 +935,13 @@ export default function TambahMateriilPage({
                                         e.target.value,
                                       )
                                     }
-                                    className="md:col-span-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20"
+                                    className="md:col-span-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
                                   />
                                   <div className="flex items-center justify-between gap-3 md:col-span-1 md:justify-end">
                                     {qrComponents[compKey] && (
                                       <img
                                         src={qrComponents[compKey]}
-                                        className="h-10 w-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 object-contain shadow-sm"
+                                        className="h-10 w-10 rounded-xl border object-contain"
                                         alt="QR"
                                       />
                                     )}
@@ -963,8 +953,7 @@ export default function TambahMateriilPage({
                                           cIdx,
                                         )
                                       }
-                                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 transition-all hover:bg-red-100 dark:hover:bg-red-900/30 hover:shadow-sm"
-                                      title="Hapus komponen"
+                                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-500 hover:bg-red-100"
                                     >
                                       <FaTrash />
                                     </button>
@@ -983,18 +972,16 @@ export default function TambahMateriilPage({
           ))}
 
           {/* Tombol Tambah Barang */}
-          <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 md:flex-row md:items-center md:justify-between transition-all hover:border-[#328E6E] dark:hover:border-[#3BAF87]">
+          <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Tambah Barang
-              </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <h4 className="text-sm font-semibold">Tambah Barang</h4>
+              <p className="text-xs text-gray-500">
                 Menambahkan item baru ke dalam struktur materiil.
               </p>
             </div>
             <button
               onClick={addItem}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#328E6E] to-[#276f56] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-[#276f56] hover:to-[#1e5a45] hover:shadow-lg active:scale-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#328E6E] to-[#276f56] px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:from-[#276f56] hover:to-[#1e5a45]"
             >
               <FaPlus /> Tambah Barang
             </button>
@@ -1002,7 +989,7 @@ export default function TambahMateriilPage({
         </div>
       </div>
 
-      {/* Footer dengan tombol aksi */}
+      {/* Footer */}
       <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-4 md:px-7">
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
@@ -1020,7 +1007,6 @@ export default function TambahMateriilPage({
         </div>
       </div>
 
-      {/* Custom scrollbar styling */}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
