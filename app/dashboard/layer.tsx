@@ -5,8 +5,8 @@ export default function Layer() {
   const data = {
     totalBMN: 1234,
     totalNonBMN: 567,
-    persenBMN: 87.5,
-    persenNonBMN: 42.3,
+    persenBMN: 60,
+    persenNonBMN: 40,
   };
 
   return (
@@ -25,36 +25,36 @@ export default function Layer() {
 
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-blue-400">
+            {/* <p className="text-xs uppercase tracking-[0.2em] text-blue-400">
               Dashboard
-            </p>
+            </p> */}
             <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">
               Data Dashboard
             </h1>
 
-            <p className="mt-2 text-sm text-slate-400">
+            {/* <p className="mt-2 text-sm text-slate-400">
               Monitoring data BMN, Non BMN dan statistik kesiapan
-            </p>
+            </p> */}
           </div>
 
           {/* Quick Summary */}
 
           <div className="grid grid-cols-2 gap-3 sm:flex">
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
+            {/* <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
               <p className="text-xs text-slate-400">Total Barang</p>
 
               <p className="text-lg font-bold text-white">
                 {(data.totalBMN + data.totalNonBMN).toLocaleString()}
               </p>
-            </div>
+            </div> */}
 
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
+            {/* <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
               <p className="text-xs text-slate-400">Kesiapan</p>
 
               <p className="text-lg font-bold text-emerald-400">
                 {((data.persenBMN + data.persenNonBMN) / 2).toFixed(1)}%
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
 

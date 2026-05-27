@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import User from "../image/user.png";
 import { FaChevronDown } from "react-icons/fa6";
 import { RiNotification3Fill, RiLogoutBoxRLine } from "react-icons/ri";
+import { IoCalendarOutline } from "react-icons/io5";
 
 type AppbarProps = {
   onToggleSidebar?: () => void;
@@ -27,7 +28,11 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
     wib: "",
     wita: "",
     wit: "",
+    gmt: "", // GMT+00 (UTC)
   });
+
+  // State untuk tanggal lengkap
+  const [currentDate, setCurrentDate] = useState("");
 
   const router = useRouter();
 
@@ -57,10 +62,12 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Update jam setiap detik
+  // Update jam & tanggal setiap detik
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
+
+      // Formatter zona waktu
       const formatterWIB = new Intl.DateTimeFormat("id-ID", {
         timeZone: "Asia/Jakarta",
         hour: "2-digit",
@@ -82,12 +89,29 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
         second: "2-digit",
         hour12: false,
       });
+      const formatterGMT = new Intl.DateTimeFormat("id-ID", {
+        timeZone: "UTC",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
 
+      // Format tanggal lengkap (contoh: Senin, 25 Mei 2026)
+      const dateFormatter = new Intl.DateTimeFormat("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
       setCurrentTime({
         wib: formatterWIB.format(now),
         wita: formatterWITA.format(now),
         wit: formatterWIT.format(now),
+        gmt: formatterGMT.format(now),
       });
+
+      setCurrentDate(dateFormatter.format(now));
     };
 
     updateClock();
@@ -98,7 +122,10 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
         setOpenProfile(false);
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -135,34 +162,61 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
         </button>
       </div>
 
       {/* RIGHT */}
       <div className="ml-auto flex items-center gap-4">
-        {/* DIGITAL CLOCK - WIB, WITA, WIT */}
-        <div className="hidden md:flex items-center gap-3 bg-gray-900/50 rounded-xl px-3 py-1.5 border border-gray-800">
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] text-green-400 font-mono">WIB</span>
-            <span className="text-sm font-mono font-medium text-gray-200 tracking-wider">
-              {currentTime.wib}
-            </span>
+        {/* DIGITAL CLOCK & DATE - WIB, WITA, WIT, GMT + Tanggal */}
+        <div className="hidden md:flex flex-row flex-col items-end gap-x-6">
+          {/* Baris zona waktu */}
+          <div className="flex items-center gap-3 bg-gray-900/50 rounded-xl px-3 py-1.5 border border-gray-800">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-green-400 font-mono">WIB</span>
+              <span className="text-sm font-mono font-medium text-gray-200 tracking-wider">
+                {currentTime.wib}
+              </span>
+            </div>
+            <div className="w-px h-6 bg-gray-700"></div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-yellow-400 font-mono">
+                WITA
+              </span>
+              <span className="text-sm font-mono font-medium text-gray-200 tracking-wider">
+                {currentTime.wita}
+              </span>
+            </div>
+            <div className="w-px h-6 bg-gray-700"></div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-blue-400 font-mono">WIT</span>
+              <span className="text-sm font-mono font-medium text-gray-200 tracking-wider">
+                {currentTime.wit}
+              </span>
+            </div>
+            <div className="w-px h-6 bg-gray-700"></div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-purple-400 font-mono">
+                GMT+00
+              </span>
+              <span className="text-sm font-mono font-medium text-gray-200 tracking-wider">
+                {currentTime.gmt}
+              </span>
+            </div>
           </div>
-          <div className="w-px h-6 bg-gray-700"></div>
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] text-yellow-400 font-mono">WITA</span>
-            <span className="text-sm font-mono font-medium text-gray-200 tracking-wider">
-              {currentTime.wita}
-            </span>
-          </div>
-          <div className="w-px h-6 bg-gray-700"></div>
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] text-blue-400 font-mono">WIT</span>
-            <span className="text-sm font-mono font-medium text-gray-200 tracking-wider">
-              {currentTime.wit}
-            </span>
+
+          {/* Baris tanggal lengkap */}
+
+          <div className="flex flex-row justify-center items-center gap-x-2 text-xs font-medium text-white bg-gray-900/30 rounded-lg px-3 py-3">
+            <IoCalendarOutline size={20} className="text-green-400" />
+            <div className="w-px h-6 bg-gray-700"></div>
+            {currentDate}
           </div>
         </div>
 
@@ -222,7 +276,9 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
                         )}
                       </div>
                       <div className="flex flex-col flex-1">
-                        <p className={`text-sm leading-snug ${!notif.read ? "font-medium text-gray-100" : "text-gray-400"}`}>
+                        <p
+                          className={`text-sm leading-snug ${!notif.read ? "font-medium text-gray-100" : "text-gray-400"}`}
+                        >
                           {notif.title}
                         </p>
                         <span className="text-xs text-gray-500 mt-1">

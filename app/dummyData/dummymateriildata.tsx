@@ -1,4 +1,4 @@
-// app/dummyData/dummymateriildata.ts
+
 import { MaterilGroup } from "@/app/component/materiltable";
 
 // ======================== GAMBAR PLACEHOLDER ========================

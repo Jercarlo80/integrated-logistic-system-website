@@ -153,29 +153,29 @@ export default function Sidebar({
               collapsed={collapsed}
               label="Kategori Material"
               icon={Tags}
-              active={pathname === "/master/kategori-material"}
-              onClick={() => handleNavigate("/master/kategori-material")}
+              active={pathname === "/kategorimaterial"}
+              onClick={() => handleNavigate("/kategorimaterial")}
             />
             <MenuItem
               collapsed={collapsed}
               label="Pabrikan"
               icon={Factory}
-              active={pathname === "/master/pabrikan"}
-              onClick={() => handleNavigate("/master/pabrikan")}
+              active={pathname === "/pabrikan"}
+              onClick={() => handleNavigate("/pabrikan")}
             />
             <MenuItem
               collapsed={collapsed}
               label="Negara"
               icon={Globe}
-              active={pathname === "/master/negara"}
-              onClick={() => handleNavigate("/master/negara")}
+              active={pathname === "/negara"}
+              onClick={() => handleNavigate("/negara")}
             />
             <MenuItem
               collapsed={collapsed}
               label="Satuan Pemilik"
               icon={Building2}
-              active={pathname === "/master/satuan-pemilik"}
-              onClick={() => handleNavigate("/master/satuan-pemilik")}
+              active={pathname === "/satuan-pemilik"}
+              onClick={() => handleNavigate("/satuan-pemilik")}
             />
           </Section>
 
@@ -185,22 +185,22 @@ export default function Sidebar({
               collapsed={collapsed}
               label="Pengguna"
               icon={Users}
-              active={pathname === "/admin/pengguna"}
-              onClick={() => handleNavigate("/admin/pengguna")}
+              active={pathname === "/pengguna"}
+              onClick={() => handleNavigate("/pengguna")}
             />
             <MenuItem
               collapsed={collapsed}
               label="Pengaturan"
               icon={Settings}
-              active={pathname === "/admin/pengaturan"}
-              onClick={() => handleNavigate("/admin/pengaturan")}
+              active={pathname === "/pengaturan"}
+              onClick={() => handleNavigate("/pengaturan")}
             />
             <MenuItem
               collapsed={collapsed}
               label="Audit Trail"
               icon={ClipboardList}
-              active={pathname === "/admin/audit-trail"}
-              onClick={() => handleNavigate("/admin/audit-trail")}
+              active={pathname === "/audit-trail"}
+              onClick={() => handleNavigate("/audit-trail")}
             />
           </Section>
 

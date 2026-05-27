@@ -1,4 +1,4 @@
-// components/TambahMateriilPage.tsx
+// app/tambah-materiil/page.tsx (atau sesuai path Anda)
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import ButtonIdentifikasi from "./buttonidentifikasi";
 import ButtonJenis from "./buttonjenis";
 import ButtonTipe from "./buttontipe";
+import { dummyKlasifikasiData } from "@/app/dummyData/dummyklasifikasidata"; // Import data dummy
 
 type Props = {
   onSubmit: (romawi: string, title: string, items: MaterilItem[]) => void;
@@ -148,8 +149,75 @@ export default function TambahMateriilPage({
   const sectionBadgeClass =
     "inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-gray-300";
 
+  // Helper untuk mendapatkan opsi unik berdasarkan level dan filter
+  const getUniqueOptions = (
+    level: "gol" | "bid" | "kel" | "subKel" | "subSubKel",
+    filters: { gol?: string; bid?: string; kel?: string; subKel?: string }
+  ) => {
+    let filtered = dummyKlasifikasiData;
+
+    if (filters.gol !== undefined && filters.gol !== "") {
+      filtered = filtered.filter((item) => item.gol.toString() === filters.gol);
+    }
+    if (filters.bid !== undefined && filters.bid !== "") {
+      filtered = filtered.filter((item) => item.bid.toString() === filters.bid);
+    }
+    if (filters.kel !== undefined && filters.kel !== "") {
+      filtered = filtered.filter((item) => item.kel.toString() === filters.kel);
+    }
+    if (filters.subKel !== undefined && filters.subKel !== "") {
+      filtered = filtered.filter(
+        (item) => item.subKel.toString() === filters.subKel
+      );
+    }
+
+    // Filter hanya yang level yang diminta memiliki nilai bukan 0
+    if (level === "gol") {
+      filtered = filtered.filter(
+        (item) => item.gol !== 0 && item.bid === 0 && item.kel === 0 && item.subKel === 0 && item.subSubKel === 0
+      );
+    } else if (level === "bid") {
+      filtered = filtered.filter(
+        (item) => item.bid !== 0 && item.kel === 0 && item.subKel === 0 && item.subSubKel === 0
+      );
+    } else if (level === "kel") {
+      filtered = filtered.filter(
+        (item) => item.kel !== 0 && item.subKel === 0 && item.subSubKel === 0
+      );
+    } else if (level === "subKel") {
+      filtered = filtered.filter(
+        (item) => item.subKel !== 0 && item.subSubKel === 0
+      );
+    } else if (level === "subSubKel") {
+      filtered = filtered.filter((item) => item.subSubKel !== 0);
+    }
+
+    const unique = new Map();
+    filtered.forEach((item) => {
+      let value, label;
+      if (level === "gol") {
+        value = item.gol;
+        label = `${item.gol} - ${item.uraian}`;
+      } else if (level === "bid") {
+        value = item.bid;
+        label = `${item.bid} - ${item.uraian}`;
+      } else if (level === "kel") {
+        value = item.kel;
+        label = `${item.kel} - ${item.uraian}`;
+      } else if (level === "subKel") {
+        value = item.subKel;
+        label = `${item.subKel} - ${item.uraian}`;
+      } else {
+        value = item.subSubKel;
+        label = `${item.subSubKel} - ${item.uraian}`;
+      }
+      if (!unique.has(value)) unique.set(value, { value: value.toString(), label });
+    });
+    return Array.from(unique.values());
+  };
+
   const createItemFromKodefikasi = (
-    overrides?: Partial<ItemState>,
+    overrides?: Partial<ItemState>
   ): ItemState => ({
     bag: initialKodefikasi?.bag ?? getDefaultKode(),
     unsr: initialKodefikasi?.unsr ?? getDefaultKode(),
@@ -204,7 +272,7 @@ export default function TambahMateriilPage({
             subSubBid: ensureInteger(item.subSubBid ?? getDefaultKode()),
             gol: ensureInteger(item.gol ?? getDefaultKode()),
             bidKlasifikasi: ensureInteger(
-              item.bidKlasifikasi ?? getDefaultKode(),
+              item.bidKlasifikasi ?? getDefaultKode()
             ),
             kel: ensureInteger(item.kel ?? getDefaultKode()),
             subKel: ensureInteger(item.subKel ?? getDefaultKode()),
@@ -229,7 +297,7 @@ export default function TambahMateriilPage({
             konseptor: item.konseptor ?? "",
             subGroups: item.subGroups,
           };
-        }),
+        })
       );
     } else {
       setItems([createItemFromKodefikasi()]);
@@ -304,7 +372,7 @@ export default function TambahMateriilPage({
               uid: crypto.randomUUID(),
             };
             compMap[compKey] = await QRCode.toDataURL(
-              JSON.stringify(compPayload),
+              JSON.stringify(compPayload)
             );
           }
         }
@@ -361,7 +429,7 @@ export default function TambahMateriilPage({
             existing[i] || {
               label: `${item.name || "Set"} ${i + 1}`,
               components: [{ name: "", jumlah: 1, serialNumber: "" }],
-            },
+            }
         );
         item.subGroups = newGroups;
       }
@@ -374,7 +442,7 @@ export default function TambahMateriilPage({
   const updateSerialNumber = (
     itemIndex: number,
     snIndex: number,
-    value: string,
+    value: string
   ) => {
     setSerialNumbers((prev) => {
       const next = [...prev];
@@ -387,7 +455,7 @@ export default function TambahMateriilPage({
 
   const handleImageUpload = (
     index: number,
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -417,7 +485,7 @@ export default function TambahMateriilPage({
   const removeComponentFromGroup = (
     itemIndex: number,
     groupIndex: number,
-    compIndex: number,
+    compIndex: number
   ) => {
     setItems((prev) => {
       const updated = [...prev];
@@ -436,7 +504,7 @@ export default function TambahMateriilPage({
     groupIndex: number,
     compIndex: number,
     field: keyof SubComponent,
-    value: string | number,
+    value: string | number
   ) => {
     setItems((prev) => {
       const updated = [...prev];
@@ -537,57 +605,131 @@ export default function TambahMateriilPage({
                     <FaClipboardList /> Klasifikasi
                   </div>
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="GOL"
+                    {/* Dropdown GOL */}
+                    <select
                       value={item.gol}
-                      onChange={(e) => updateItem(idx, "gol", e.target.value)}
-                      className={inputNumberClass}
-                    />
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="BID (Klasifikasi)"
+                      onChange={(e) => {
+                        updateItem(idx, "gol", e.target.value);
+                        // Reset child levels
+                        updateItem(idx, "bidKlasifikasi", "0");
+                        updateItem(idx, "kel", "0");
+                        updateItem(idx, "subKel", "0");
+                        updateItem(idx, "subSubKel", "0");
+                      }}
+                      className={inputSoftClass}
+                    >
+                      <option value="0">-- Pilih GOL --</option>
+                      {getUniqueOptions("gol", {}).map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Dropdown BID - tergantung GOL */}
+                    <select
                       value={item.bidKlasifikasi}
-                      onChange={(e) =>
-                        updateItem(idx, "bidKlasifikasi", e.target.value)
-                      }
-                      className={inputNumberClass}
-                    />
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="KEL"
+                      onChange={(e) => {
+                        updateItem(idx, "bidKlasifikasi", e.target.value);
+                        updateItem(idx, "kel", "0");
+                        updateItem(idx, "subKel", "0");
+                        updateItem(idx, "subSubKel", "0");
+                      }}
+                      className={inputSoftClass}
+                      disabled={item.gol === "0"}
+                    >
+                      <option value="0">-- Pilih BID --</option>
+                      {item.gol !== "0" &&
+                        getUniqueOptions("bid", { gol: item.gol }).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                    </select>
+
+                    {/* Dropdown KEL - tergantung GOL + BID */}
+                    <select
                       value={item.kel}
-                      onChange={(e) => updateItem(idx, "kel", e.target.value)}
-                      className={inputNumberClass}
-                    />
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="SUB KEL"
+                      onChange={(e) => {
+                        updateItem(idx, "kel", e.target.value);
+                        updateItem(idx, "subKel", "0");
+                        updateItem(idx, "subSubKel", "0");
+                      }}
+                      className={inputSoftClass}
+                      disabled={item.gol === "0" || item.bidKlasifikasi === "0"}
+                    >
+                      <option value="0">-- Pilih KEL --</option>
+                      {item.gol !== "0" &&
+                        item.bidKlasifikasi !== "0" &&
+                        getUniqueOptions("kel", {
+                          gol: item.gol,
+                          bid: item.bidKlasifikasi,
+                        }).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                    </select>
+
+                    {/* Dropdown SUB KEL - tergantung GOL + BID + KEL */}
+                    <select
                       value={item.subKel}
-                      onChange={(e) =>
-                        updateItem(idx, "subKel", e.target.value)
+                      onChange={(e) => {
+                        updateItem(idx, "subKel", e.target.value);
+                        updateItem(idx, "subSubKel", "0");
+                      }}
+                      className={inputSoftClass}
+                      disabled={
+                        item.gol === "0" ||
+                        item.bidKlasifikasi === "0" ||
+                        item.kel === "0"
                       }
-                      className={inputNumberClass}
-                    />
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="SUB SUB KEL"
+                    >
+                      <option value="0">-- Pilih SUB KEL --</option>
+                      {item.gol !== "0" &&
+                        item.bidKlasifikasi !== "0" &&
+                        item.kel !== "0" &&
+                        getUniqueOptions("subKel", {
+                          gol: item.gol,
+                          bid: item.bidKlasifikasi,
+                          kel: item.kel,
+                        }).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                    </select>
+
+                    {/* Dropdown SUB-SUB KEL - tergantung GOL + BID + KEL + SUB KEL */}
+                    <select
                       value={item.subSubKel}
                       onChange={(e) =>
                         updateItem(idx, "subSubKel", e.target.value)
                       }
-                      className={inputNumberClass}
-                    />
+                      className={inputSoftClass}
+                      disabled={
+                        item.gol === "0" ||
+                        item.bidKlasifikasi === "0" ||
+                        item.kel === "0" ||
+                        item.subKel === "0"
+                      }
+                    >
+                      <option value="0">-- Pilih SUB-SUB KEL --</option>
+                      {item.gol !== "0" &&
+                        item.bidKlasifikasi !== "0" &&
+                        item.kel !== "0" &&
+                        item.subKel !== "0" &&
+                        getUniqueOptions("subSubKel", {
+                          gol: item.gol,
+                          bid: item.bidKlasifikasi,
+                          kel: item.kel,
+                          subKel: item.subKel,
+                        }).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                    </select>
                   </div>
                 </div>
 
@@ -903,7 +1045,7 @@ export default function TambahMateriilPage({
                                         gIdx,
                                         cIdx,
                                         "name",
-                                        e.target.value,
+                                        e.target.value
                                       )
                                     }
                                     className="md:col-span-5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
@@ -918,7 +1060,7 @@ export default function TambahMateriilPage({
                                         gIdx,
                                         cIdx,
                                         "jumlah",
-                                        Number(e.target.value),
+                                        Number(e.target.value)
                                       )
                                     }
                                     className="md:col-span-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
@@ -932,7 +1074,7 @@ export default function TambahMateriilPage({
                                         gIdx,
                                         cIdx,
                                         "serialNumber",
-                                        e.target.value,
+                                        e.target.value
                                       )
                                     }
                                     className="md:col-span-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
@@ -950,7 +1092,7 @@ export default function TambahMateriilPage({
                                         removeComponentFromGroup(
                                           idx,
                                           gIdx,
-                                          cIdx,
+                                          cIdx
                                         )
                                       }
                                       className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-500 hover:bg-red-100"
