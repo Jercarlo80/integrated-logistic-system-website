@@ -1,6 +1,8 @@
+import CardNegara from "../component/cardNegara";
+
 export default function Layer() {
   return (
-    <div className="w-full min-h-screen bg-[#020617] text-slate-100 p-4 md:p-6">
+    <div className="w-full min-h-screen bg-gray-950 text-slate-100 p-4 md:p-6">
       {/* Background gelap (opsional) */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_28%)]" />
@@ -9,8 +11,9 @@ export default function Layer() {
       </div>
 
       <h1 className="text-xl md:text-2xl font-bold text-gray-100 mb-6">
-        Kategori
+        Negara
       </h1>
+      <CardNegara />
     </div>
   );
 }

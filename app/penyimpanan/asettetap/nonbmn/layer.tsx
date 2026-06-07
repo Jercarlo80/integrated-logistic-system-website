@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import SearchBar from "../../../../component/searchbar";
+import SearchBar from "../../../component/searchbar";
 import { FaChevronDown } from "react-icons/fa";
 import { TbHexagonNumber1Filled, TbHexagonNumber2Filled } from "react-icons/tb";
 import MaterilTable, { MaterilGroup, MaterilItem } from "@/app/component/materiltable"; // sesuaikan path

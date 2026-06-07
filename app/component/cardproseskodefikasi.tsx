@@ -1,34 +1,123 @@
+// cardproseskodefikasi.tsx
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  FolderOpen,
-  Table2,
-} from "lucide-react";
-import ProsesKodefikasiTabel from "./proseskodefikasitabel";
+import { ChevronDown, ChevronRight, FolderOpen, Table2 } from "lucide-react";
+import ProsesKodefikasiTabel, { PengajuanGroup } from "./proseskodefikasitabel";
+import Gambar from "../image/PHOTO-2026-05-12-15-59-43.jpg";
 
-type Message = {
-  id: number;
-  title: string;
-  file: string;
-};
+// ======================== DUMMY DATA ========================
+const dummyPengajuanData: PengajuanGroup[] = [
+  {
+    romawi: "I",
+    title: "Pengajuan Kodefikasi Barang Elektronik",
+    items: [
+      {
+        id: "P001",
+        bag: "1",
+        unsr: "3",
+        bid: "1",
+        subBid: "4",
+        subSubBid: "4",
+        gol: "01",
+        bidKlasifikasi: "01",
+        kel: "01",
+        subKel: "01",
+        subSubKel: "01",
+        jenis: "1",
+        tipe: "1",
+        urut: "001",
+        name: "Laptop Dell Latitude 5420",
+        merkType: "Dell Latitude 5420",
+        serialNumbers: ["SN12345"],
+        negaraPembuat: "China",
+        tahunPembuatan: "2023",
+        tahunPemakaian: "2024",
+        jumlah: 1,
+        satuan: "Unit",
+        kondisiB: "Baik",
+        rr: "0",
+        rb: "0",
+        persen: "100",
+        keterangan: "Laptop untuk staf",
+        tanggalPengajuan: "2025-03-15",
+        status: "Menunggu",
+        gambar: Gambar.src,
+      },
+      {
+        id: "P002",
+        bag: "1",
+        unsr: "3",
+        bid: "1",
+        subBid: "4",
+        subSubBid: "5",
+        gol: "02",
+        bidKlasifikasi: "02",
+        kel: "02",
+        subKel: "02",
+        subSubKel: "02",
+        jenis: "1",
+        tipe: "1",
+        urut: "002",
+        name: "Printer HP LaserJet",
+        merkType: "HP LaserJet M404",
+        serialNumbers: ["SN67890", "SN67891"],
+        negaraPembuat: "Vietnam",
+        tahunPembuatan: "2022",
+        tahunPemakaian: "2023",
+        jumlah: 2,
+        satuan: "Unit",
+        kondisiB: "Baik",
+        rr: "0",
+        rb: "0",
+        persen: "95",
+        keterangan: "Printer untuk ruang administrasi",
+        tanggalPengajuan: "2025-03-20",
+        status: "Menunggu",
+        gambar: "https://picsum.photos/id/1/100/100",
+      },
+    ],
+  },
+  {
+    romawi: "II",
+    title: "Pengajuan Kodefikasi Alat Tulis Kantor",
+    items: [
+      {
+        id: "P003",
+        bag: "1",
+        unsr: "3",
+        bid: "1",
+        subBid: "4",
+        subSubBid: "6",
+        gol: "03",
+        bidKlasifikasi: "03",
+        kel: "03",
+        subKel: "03",
+        subSubKel: "03",
+        jenis: "2",
+        tipe: "2",
+        urut: "003",
+        name: "Kertas HVS A4",
+        merkType: "Sidney",
+        serialNumbers: [],
+        negaraPembuat: "Indonesia",
+        tahunPembuatan: "2025",
+        tahunPemakaian: "2025",
+        jumlah: 50,
+        satuan: "Rim",
+        kondisiB: "Baik",
+        rr: "0",
+        rb: "0",
+        persen: "100",
+        keterangan: "Kertas untuk keperluan cetak",
+        tanggalPengajuan: "2025-03-25",
+        status: "Menunggu",
+      },
+    ],
+  },
+];
 
-type Unit = {
-  id: string;
-  code: number[];
-  title: string;
-  date: string;
-  messages: Message[];
-};
-
-type Sektor = {
-  sektorName: string;
-  units: Unit[];
-};
-
+// ======================== DATA UNIT (RAW) ========================
 const rawData: { code: number[]; name: string }[] = [
   { code: [1, 3, 1, 1, 0, 0], name: "UNSUR PIMPINAN" },
   { code: [1, 3, 1, 2, 1, 0], name: "SOPS" },
@@ -62,7 +151,7 @@ const rawData: { code: number[]; name: string }[] = [
   { code: [1, 3, 1, 4, 25, 0], name: "DENKOMLEKSTRADA BALIKPAPAN" },
   { code: [1, 3, 1, 4, 26, 0], name: "SUBDEN BANJARMASIN" },
   { code: [1, 3, 1, 4, 27, 0], name: "DENKOMLEKSTRADA PONTIANAK" },
-  { code: [1, 3, 1, 4, 28, 0], name: "DENKOMLEKSTRADA MAKASAR" },
+  { code: [1, 3, 1, 4, 28, 0], name: "DENKOMLEKSTRADA MAKASSAR" },
   { code: [1, 3, 1, 4, 29, 0], name: "DENKOMLEKSTRADA MANADO" },
   { code: [1, 3, 1, 4, 30, 0], name: "DENKOMLEKSTRADA DENPASAR" },
   { code: [1, 3, 1, 4, 31, 0], name: "SUBDEN KUPANG" },
@@ -74,204 +163,160 @@ const rawData: { code: number[]; name: string }[] = [
   { code: [1, 3, 1, 4, 37, 0], name: "DENKOMLEKSTRADA SORONG" },
 ];
 
-const formatKode = (code: number[]) => code.map((n) => String(n)).join(" ");
-
+const formatKode = (code: number[]) => code.join(".");
 const seededRandom = (seed: number) => {
   const x = Math.sin(seed * 9999) * 10000;
   return x - Math.floor(x);
 };
-
 const getRandomDate = (seed: number) => {
   const start = new Date(2025, 0, 1);
   const end = new Date();
-  const rand = seededRandom(seed);
-  const randomDate = new Date(
-    start.getTime() + rand * (end.getTime() - start.getTime()),
-  );
-  return randomDate.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const randomDate = new Date(start.getTime() + seededRandom(seed) * (end.getTime() - start.getTime()));
+  return randomDate.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 };
-
-const getDummyMessages = (unitName: string, idx: number): Message[] => {
-  const count = (Math.floor(seededRandom(idx + 1) * 3) % 3) + 1;
-  return Array.from({ length: count }, (_, i) => ({
-    id: i + 1,
-    title: `Dokumen ${String.fromCharCode(65 + i)} - ${unitName}`,
-    file: `/files/${unitName.replace(/\s/g, "_")}_${idx}_${i + 1}.pdf`,
-  }));
-};
-
-const buildSektorData = (): Sektor[] => {
-  const sektorMap = new Map<number, { name: string; units: Unit[] }>();
-
-  for (let i = 0; i < rawData.length; i++) {
-    const item = rawData[i];
-    const subBid = item.code[3];
-
-    let sektorName = "";
-    if (subBid === 1) sektorName = "Pimpinan Satkomlek TNI";
-    else if (subBid === 2) sektorName = "Pembantu Satkomlek TNI";
-    else if (subBid === 3) sektorName = "Pelayanan Satkomlek TNI";
-    else if (subBid === 4) sektorName = "Pelaksana Satkomlek TNI";
-    else continue;
-
-    if (!sektorMap.has(subBid)) {
-      sektorMap.set(subBid, { name: sektorName, units: [] });
-    }
-
-    const unit: Unit = {
-      id: `${subBid}-${i}`,
-      code: item.code,
-      title: item.name,
-      date: getRandomDate(i + 1),
-      messages: getDummyMessages(item.name, i),
-    };
-
-    sektorMap.get(subBid)!.units.push(unit);
+const getSektorName = (subBid: number) => {
+  switch (subBid) {
+    case 1: return "Pimpinan Satkomlek TNI";
+    case 2: return "Pembantu Satkomlek TNI";
+    case 3: return "Pelayanan Satkomlek TNI";
+    case 4: return "Pelaksana Satkomlek TNI";
+    default: return "-";
   }
-
-  return Array.from(sektorMap.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([, value]) => ({
-      sektorName: value.name,
-      units: value.units,
-    }));
 };
 
+type Unit = {
+  id: string;
+  code: number[];
+  title: string;
+  sektorName: string;
+  date: string;
+};
+
+const buildUnitsData = (): Unit[] =>
+  rawData.map((item, index) => ({
+    id: `unit-${index}`,
+    code: item.code,
+    title: item.name,
+    sektorName: getSektorName(item.code[3]),
+    date: getRandomDate(index + 1),
+  }));
+
+// ========== PROPS UNTUK UNITITEM ==========
 interface UnitItemProps {
   unit: Unit;
   isExpanded: boolean;
   onToggle: () => void;
+  badgeCount: number;
+  pengajuanData: PengajuanGroup[];
+  onDataChange: (newData: PengajuanGroup[]) => void;
 }
 
-function UnitItem({ unit, isExpanded, onToggle }: UnitItemProps) {
+function UnitItem({ 
+  unit, 
+  isExpanded, 
+  onToggle, 
+  badgeCount,
+  pengajuanData,
+  onDataChange
+}: UnitItemProps) {
   return (
-    <div className="border-b border-slate-700/50 last:border-b-0">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between py-3 px-4 hover:bg-slate-800/30 transition-colors text-left"
-      >
-        <div className="flex items-center gap-3">
-          <FolderOpen size={18} className="text-cyan-400" />
-          <div>
-            <div className="text-sm font-medium text-slate-200">
-              {unit.title}
+    <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-slate-900/90 to-slate-800/60 backdrop-blur-md overflow-hidden shadow-lg transition-all duration-300 hover:border-cyan-400/40 hover:shadow-cyan-500/10">
+      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-4 md:px-6 md:py-5 text-left transition-all">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <FolderOpen size={22} className="text-cyan-400 shrink-0 mt-1" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h3 className="text-sm md:text-base lg:text-lg font-semibold text-slate-100 truncate">{unit.title}</h3>
+              {/* BADGE: muncul untuk semua card, dengan warna berbeda jika >0 */}
+              <span className={`inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full shadow-md ${
+                badgeCount > 0 
+                  ? 'bg-red-500 text-white animate-pulse' 
+                  : 'bg-gray-600 text-gray-300'
+              }`}>
+                {badgeCount}
+              </span>
             </div>
-            <div className="text-xs text-slate-500">
-              Diperbarui: {unit.date}
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 text-[11px] md:text-xs text-slate-400">
+              <div><span className="text-slate-500">Kode :</span> {formatKode(unit.code)}</div>
+              <div><span className="text-slate-500">Sektor :</span> {unit.sektorName}</div>
+              <div><span className="text-slate-500">Diperbarui :</span> {unit.date}</div>
             </div>
           </div>
         </div>
-        {isExpanded ? (
-          <ChevronDown size={16} className="text-slate-400" />
-        ) : (
-          <ChevronRight size={16} className="text-slate-400" />
-        )}
+        <div className="ml-4 shrink-0">
+          {isExpanded ? <ChevronDown className="text-cyan-400" size={20} /> : <ChevronRight className="text-slate-400" size={20} />}
+        </div>
       </button>
-
-      {isExpanded && (
-        <div className="px-4 pb-3 pt-0 bg-slate-900/30 rounded-b-lg">
-          <div className="text-xs font-semibold text-cyan-300 mb-2 flex items-center gap-1">
-            <FileText size={12} /> Dokumen Terkait
+      <div className={`transition-all duration-300 overflow-hidden ${isExpanded ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"}`}>
+        <div className="border-t border-cyan-500/20 bg-slate-900/40 px-4 py-4 md:px-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Table2 size={18} className="text-cyan-400" />
+            <span className="text-cyan-300 font-medium">Proses Kodefikasi</span>
           </div>
-
-          {unit.messages.length === 0 ? (
-            <p className="text-xs text-slate-500 italic">Tidak ada dokumen</p>
-          ) : (
-            <ul className="space-y-1">
-              {unit.messages.map((msg) => (
-                <li
-                  key={msg.id}
-                  className="text-xs text-slate-300 flex items-center gap-2"
-                >
-                  <span className="text-cyan-400">📄</span>
-                  <span>{msg.title}</span>
-                  <span className="text-slate-500 text-[10px]">
-                    ({msg.file})
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="w-full max-h-[70vh] overflow-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/50">
+            <ProsesKodefikasiTabel 
+              data={pengajuanData} 
+              onDataChange={onDataChange} 
+            />
+          </div>
         </div>
-      )}
-    </div>
-  );
-}
-
-interface CardSektorProps {
-  sektorName: string;
-  units: Unit[];
-}
-
-function CardSektor({ sektorName, units }: CardSektorProps) {
-  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
-
-  const toggleUnit = (unitId: string) => {
-    setExpandedUnits((prev) => {
-      const next = new Set(prev);
-      if (next.has(unitId)) next.delete(unitId);
-      else next.add(unitId);
-      return next;
-    });
-  };
-
-  return (
-    <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/80 to-slate-800/40 backdrop-blur-sm overflow-hidden shadow-lg">
-      <div className="bg-cyan-500/10 px-5 py-3 border-b border-cyan-500/20">
-        <h3 className="text-lg font-semibold text-cyan-300 flex items-center gap-2">
-          <span className="w-1.5 h-5 bg-cyan-400 rounded-full" />
-          {sektorName}
-        </h3>
-        <p className="text-xs text-slate-400 mt-1">
-          {units.length} unit organisasi
-        </p>
-      </div>
-
-      <div className="divide-y divide-slate-700/30">
-        {units.map((unit) => (
-          <UnitItem
-            key={unit.id}
-            unit={unit}
-            isExpanded={expandedUnits.has(unit.id)}
-            onToggle={() => toggleUnit(unit.id)}
-          />
-        ))}
-      </div>
-
-      <div className="border-t border-cyan-500/20 p-4 h-150 overflow-y-scroll">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-cyan-300">
-          <Table2 size={16} />
-          Proses Kodefikasi Tabel
-        </div>
-        {/* Perbaikan: hapus props karena komponen ProsesKodefikasiTabel tidak menerima props */}
-        <ProsesKodefikasiTabel />
       </div>
     </div>
   );
 }
 
 export default function CardProsesKodefikasi() {
-  const sektorData = useMemo(() => buildSektorData(), []);
+  const unitsData = useMemo(() => buildUnitsData(), []);
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const [pengajuanData, setPengajuanData] = useState<PengajuanGroup[]>(dummyPengajuanData);
+
+  const getTotalQuantityBySubBid = (subBid: number): number => {
+    let total = 0;
+    for (const group of pengajuanData) {
+      for (const item of group.items) {
+        if (Number(item.subBid) === subBid) {
+          total += item.jumlah ?? 1;
+        }
+      }
+    }
+    return total;
+  };
+
+  const toggleUnit = (id: string) => {
+    setExpandedUnits((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   return (
-    <div className="w-full min-h-screen bg-[#020617] p-4 md:p-6">
+    <div className="w-full min-h-screen bg-[#020617] px-4 py-4 md:px-6 lg:px-8 xl:px-10">
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_28%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_24%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[48px_48px]" />
+        <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)`, backgroundSize: "48px 48px" }} />
       </div>
 
-      <div className="relative z-10">
-        <div className="w-full flex flex-col gap-6">
-          {sektorData.map((sektor, idx) => (
-            <Fragment key={idx}>
-              <CardSektor sektorName={sektor.sektorName} units={sektor.units} />
-            </Fragment>
-          ))}
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto">
+        <div className="space-y-4 lg:space-y-5">
+          {unitsData.map((unit) => {
+            const subBid = unit.code[3];
+            const badgeCount = getTotalQuantityBySubBid(subBid);
+            return (
+              <Fragment key={unit.id}>
+                <UnitItem
+                  unit={unit}
+                  isExpanded={expandedUnits.has(unit.id)}
+                  onToggle={() => toggleUnit(unit.id)}
+                  badgeCount={badgeCount}
+                  pengajuanData={pengajuanData}
+                  onDataChange={setPengajuanData}
+                />
+              </Fragment>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image, { StaticImageData } from "next/image";
-import MABESTNI from "../image/MABESTNI.png";
-import SatkomlekLogo from "../image/satkomlekLogo.png";
+import MABESTNI from "@/app/image/MABESTNI.png";
+import SatkomlekLogo from "@/app/image/satkomlekLogo.png";
 import {
   parseTree,
   TreeNode,

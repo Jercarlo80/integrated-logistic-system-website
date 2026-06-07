@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Building2, Archive } from "lucide-react";
-import TabMaterial from "../component/tabmateril";
-import CardIdentifikasi from "../component/cardidentifikasi";
-import CardProsesKodefikasi from "../component/cardproseskodefikasi";
+import TabMaterial from "@/app/component/tabmateril";
+import CardIdentifikasi from "@/app/component/cardidentifikasi";
+import CardProsesKodefikasi from "@/app/component/cardproseskodefikasi";
 
 type MainTab = "aset" | "Habis Pakai";
 type SubTab = "bmn" | "nonbmn";
@@ -51,7 +51,7 @@ export default function Layer() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[48px_48px]" />
       </div>
       <h1 className="text-xl md:text-2xl font-bold text-gray-100 mb-6">
-        Proses Kodefikasi
+        Usulan Kodefikasi
       </h1>
       <TabMaterial
         mainTabs={mainTabsConfig}

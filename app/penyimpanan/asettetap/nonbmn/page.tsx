@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Appbar from "../../../../component/appbar";
-import Sidebar from "../../../../component/sidebar";
+import Appbar from "../../../component/appbar";
+import Sidebar from "../../../component/sidebar";
 import Layer from "./layer";
 
 export default function Gudang1() {

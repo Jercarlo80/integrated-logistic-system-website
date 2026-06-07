@@ -7,6 +7,7 @@ import User from "../image/user.png";
 import { FaChevronDown } from "react-icons/fa6";
 import { RiNotification3Fill, RiLogoutBoxRLine } from "react-icons/ri";
 import { IoCalendarOutline } from "react-icons/io5";
+import { useUser } from "../context/userContext";
 
 type AppbarProps = {
   onToggleSidebar?: () => void;
@@ -20,10 +21,9 @@ type NotificationItem = {
 };
 
 export default function Appbar({ onToggleSidebar }: AppbarProps) {
+  const { user } = useUser();
   const [openProfile, setOpenProfile] = useState(false);
   const [openNotif, setOpenNotif] = useState(false);
-
-  // State untuk jam
   const [currentTime, setCurrentTime] = useState({
     wib: "",
     wita: "",
@@ -140,7 +140,7 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     sessionStorage.clear();
-    router.push("/login");
+    router.push("/");
   };
 
   const markAllAsRead = () => {
@@ -306,19 +306,20 @@ export default function Appbar({ onToggleSidebar }: AppbarProps) {
             className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-800/60 transition cursor-pointer"
           >
             <Image
-              src={User}
+              src={user.avatar} // ⬅️ dari context
               alt="User-profile"
               width={44}
               height={44}
+              unoptimized={typeof user.avatar === "string"} // perlu untuk data URL
               className="rounded-xl object-cover shadow-sm"
             />
 
             <div className="hidden md:flex flex-col leading-tight">
               <span className="text-sm font-semibold text-gray-200">
-                Letda Sus Jeremia Carlo Christianto
+                {user.name} {/* ⬅️ dari context */}
               </span>
               <span className="text-xs text-gray-400">
-                Danton PaldukLap Denkomsat
+                {user.role} {/* ⬅️ dari context */}
               </span>
             </div>
 

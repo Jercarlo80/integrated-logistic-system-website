@@ -1,4 +1,4 @@
-// app/tambah-materiil/page.tsx (atau sesuai path Anda)
+// app/tambah-materiil/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -8,42 +8,24 @@ import {
   FaSave,
   FaTimes,
   FaBarcode,
-  FaLayerGroup,
   FaBoxes,
   FaClipboardList,
   FaInfoCircle,
   FaImage,
   FaCalendarAlt,
   FaUserCog,
-  FaQrcode,
 } from "react-icons/fa";
 import QRCode from "qrcode";
-import { MaterilItem } from "./materiltable";
 import { useRouter } from "next/navigation";
-import ButtonIdentifikasi from "./buttonidentifikasi";
 import ButtonJenis from "./buttonjenis";
 import ButtonTipe from "./buttontipe";
-import { dummyKlasifikasiData } from "@/app/dummyData/dummyklasifikasidata"; // Import data dummy
-
-type Props = {
-  onSubmit: (romawi: string, title: string, items: MaterilItem[]) => void;
-  initialData?: any;
-  initialKodefikasi?: {
-    bag?: string;
-    unsr?: string;
-    bid?: string;
-    subBid?: string;
-    subSubBid?: string;
-    gol?: string;
-    bidKlasifikasi?: string;
-    kel?: string;
-    subKel?: string;
-    subSubKel?: string;
-  };
-  onBack?: () => void;
-  defaultJenis?: string; // "1" untuk BMN, "2" untuk Non BMN
-  defaultTipe?: string; // "1" untuk Aset Tetap, "2" untuk Habis Pakai
-};
+import { dummyKlasifikasiData } from "@/app/dummyData/dummyklasifikasidata";
+import {
+  PengajuanGroup,
+  PengajuanItem,
+} from "@/app/component/proseskodefikasitabel";
+import Identifikasi from "../kodefikasi/identifikasi";
+import Klasifikasi from "../kodefikasi/klasifikasi";
 
 type SubComponent = {
   name: string;
@@ -56,7 +38,6 @@ type SubGroup = {
   components: SubComponent[];
 };
 
-// EXPORT type ItemState agar dapat diimport oleh buttonidentifikasi.tsx
 export type ItemState = {
   bag: string;
   unsr: string;
@@ -89,6 +70,26 @@ export type ItemState = {
   subGroups?: SubGroup[];
 };
 
+type Props = {
+  onAjukanUsulan?: (group: PengajuanGroup) => void;
+  initialData?: any;
+  initialKodefikasi?: {
+    bag?: string;
+    unsr?: string;
+    bid?: string;
+    subBid?: string;
+    subSubBid?: string;
+    gol?: string;
+    bidKlasifikasi?: string;
+    kel?: string;
+    subKel?: string;
+    subSubKel?: string;
+  };
+  onBack?: () => void;
+  defaultJenis?: string;
+  defaultTipe?: string;
+};
+
 const getYearOptions = () => {
   const currentYear = new Date().getFullYear();
   const years = [];
@@ -107,23 +108,25 @@ const hitungPersen = (b: number, rr: number, rb: number): string => {
 };
 
 const integerFields = [
-  "bag",
-  "unsr",
-  "bid",
-  "subBid",
-  "subSubBid",
-  "gol",
-  "bidKlasifikasi",
-  "kel",
-  "subKel",
-  "subSubKel",
-  "jenis",
-  "tipe",
-  "urut",
+  "bag", "unsr", "bid", "subBid", "subSubBid", "gol", "bidKlasifikasi",
+  "kel", "subKel", "subSubKel", "jenis", "tipe", "urut",
 ];
 
+// --- Styling konsisten dengan bg-gray-950 ---
+const inputBaseClass = "w-full rounded-xl border border-white/10 bg-gray-950 px-3.5 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-4 focus:ring-emerald-500/20";
+const inputNumberClass = inputBaseClass + " [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+const textareaClass = inputBaseClass + " resize-y";
+const selectClass = inputBaseClass + " cursor-pointer";
+const badgeSectionClass = "inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-gray-300";
+const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400";
+const cardClass = "overflow-hidden rounded-2xl border border-white/10 bg-gray-950 shadow-sm";
+const cardHeaderClass = "flex flex-col gap-3 border-b border-white/10 bg-gray-950 px-5 py-4 md:flex-row md:items-center md:justify-between";
+const cardBodyClass = "space-y-6 px-4 py-5 md:px-5 md:py-6";
+const sectionDividerClass = "space-y-3";
+const chipInfoClass = "inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300";
+
 export default function TambahMateriilPage({
-  onSubmit,
+  onAjukanUsulan,
   initialData,
   initialKodefikasi,
   onBack,
@@ -136,89 +139,49 @@ export default function TambahMateriilPage({
   const [qrItems, setQrItems] = useState<Record<number, string[]>>({});
   const [qrSets, setQrSets] = useState<Record<string, string>>({});
   const [qrComponents, setQrComponents] = useState<Record<string, string>>({});
+  const [romawi, setRomawi] = useState("");
+  const [title, setTitle] = useState("");
+  const [authToken, setAuthToken] = useState<string | undefined>();
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (token) setAuthToken(token);
+    else console.warn("Token autentikasi tidak ditemukan.");
+  }, []);
 
   const yearOptions = getYearOptions();
   const today = new Date().toISOString().slice(0, 10);
 
-  const inputNumberClass =
-    "w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all duration-200 focus:border-[#328E6E] focus:ring-4 focus:ring-[#328E6E]/20 hover:shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-  const inputSoftClass =
-    "w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none transition-all duration-200 focus:border-[#328E6E] focus:bg-white dark:focus:bg-gray-900 focus:ring-4 focus:ring-[#328E6E]/20 hover:shadow-sm";
-  const labelClass =
-    "mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400";
-  const sectionBadgeClass =
-    "inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-gray-300";
-
-  // Helper untuk mendapatkan opsi unik berdasarkan level dan filter
   const getUniqueOptions = (
     level: "gol" | "bid" | "kel" | "subKel" | "subSubKel",
     filters: { gol?: string; bid?: string; kel?: string; subKel?: string }
   ) => {
     let filtered = dummyKlasifikasiData;
+    if (filters.gol && filters.gol !== "0") filtered = filtered.filter(item => item.gol.toString() === filters.gol);
+    if (filters.bid && filters.bid !== "0") filtered = filtered.filter(item => item.bid.toString() === filters.bid);
+    if (filters.kel && filters.kel !== "0") filtered = filtered.filter(item => item.kel.toString() === filters.kel);
+    if (filters.subKel && filters.subKel !== "0") filtered = filtered.filter(item => item.subKel.toString() === filters.subKel);
 
-    if (filters.gol !== undefined && filters.gol !== "") {
-      filtered = filtered.filter((item) => item.gol.toString() === filters.gol);
-    }
-    if (filters.bid !== undefined && filters.bid !== "") {
-      filtered = filtered.filter((item) => item.bid.toString() === filters.bid);
-    }
-    if (filters.kel !== undefined && filters.kel !== "") {
-      filtered = filtered.filter((item) => item.kel.toString() === filters.kel);
-    }
-    if (filters.subKel !== undefined && filters.subKel !== "") {
-      filtered = filtered.filter(
-        (item) => item.subKel.toString() === filters.subKel
-      );
-    }
-
-    // Filter hanya yang level yang diminta memiliki nilai bukan 0
-    if (level === "gol") {
-      filtered = filtered.filter(
-        (item) => item.gol !== 0 && item.bid === 0 && item.kel === 0 && item.subKel === 0 && item.subSubKel === 0
-      );
-    } else if (level === "bid") {
-      filtered = filtered.filter(
-        (item) => item.bid !== 0 && item.kel === 0 && item.subKel === 0 && item.subSubKel === 0
-      );
-    } else if (level === "kel") {
-      filtered = filtered.filter(
-        (item) => item.kel !== 0 && item.subKel === 0 && item.subSubKel === 0
-      );
-    } else if (level === "subKel") {
-      filtered = filtered.filter(
-        (item) => item.subKel !== 0 && item.subSubKel === 0
-      );
-    } else if (level === "subSubKel") {
-      filtered = filtered.filter((item) => item.subSubKel !== 0);
-    }
+    if (level === "gol") filtered = filtered.filter(item => item.gol !== 0 && item.bid === 0 && item.kel === 0 && item.subKel === 0 && item.subSubKel === 0);
+    else if (level === "bid") filtered = filtered.filter(item => item.bid !== 0 && item.kel === 0 && item.subKel === 0 && item.subSubKel === 0);
+    else if (level === "kel") filtered = filtered.filter(item => item.kel !== 0 && item.subKel === 0 && item.subSubKel === 0);
+    else if (level === "subKel") filtered = filtered.filter(item => item.subKel !== 0 && item.subSubKel === 0);
+    else filtered = filtered.filter(item => item.subSubKel !== 0);
 
     const unique = new Map();
-    filtered.forEach((item) => {
+    filtered.forEach(item => {
       let value, label;
-      if (level === "gol") {
-        value = item.gol;
-        label = `${item.gol} - ${item.uraian}`;
-      } else if (level === "bid") {
-        value = item.bid;
-        label = `${item.bid} - ${item.uraian}`;
-      } else if (level === "kel") {
-        value = item.kel;
-        label = `${item.kel} - ${item.uraian}`;
-      } else if (level === "subKel") {
-        value = item.subKel;
-        label = `${item.subKel} - ${item.uraian}`;
-      } else {
-        value = item.subSubKel;
-        label = `${item.subSubKel} - ${item.uraian}`;
-      }
+      if (level === "gol") { value = item.gol; label = `${item.gol} - ${item.uraian}`; }
+      else if (level === "bid") { value = item.bid; label = `${item.bid} - ${item.uraian}`; }
+      else if (level === "kel") { value = item.kel; label = `${item.kel} - ${item.uraian}`; }
+      else if (level === "subKel") { value = item.subKel; label = `${item.subKel} - ${item.uraian}`; }
+      else { value = item.subSubKel; label = `${item.subSubKel} - ${item.uraian}`; }
       if (!unique.has(value)) unique.set(value, { value: value.toString(), label });
     });
     return Array.from(unique.values());
   };
 
-  const createItemFromKodefikasi = (
-    overrides?: Partial<ItemState>
-  ): ItemState => ({
+  const createItemFromKodefikasi = (overrides?: Partial<ItemState>): ItemState => ({
     bag: initialKodefikasi?.bag ?? getDefaultKode(),
     unsr: initialKodefikasi?.unsr ?? getDefaultKode(),
     bid: initialKodefikasi?.bid ?? getDefaultKode(),
@@ -258,60 +221,54 @@ export default function TambahMateriilPage({
 
   useEffect(() => {
     if (initialData) {
-      setItems(
-        (initialData.items ?? []).map((item: any) => {
-          const b = Number(item.kondisiB) || 0;
-          const rr = Number(item.rr) || 0;
-          const rb = Number(item.rb) || 0;
-          const persen = hitungPersen(b, rr, rb);
-          return {
-            bag: ensureInteger(item.bag ?? getDefaultKode()),
-            unsr: ensureInteger(item.unsr ?? getDefaultKode()),
-            bid: ensureInteger(item.bid ?? getDefaultKode()),
-            subBid: ensureInteger(item.subBid ?? getDefaultKode()),
-            subSubBid: ensureInteger(item.subSubBid ?? getDefaultKode()),
-            gol: ensureInteger(item.gol ?? getDefaultKode()),
-            bidKlasifikasi: ensureInteger(
-              item.bidKlasifikasi ?? getDefaultKode()
-            ),
-            kel: ensureInteger(item.kel ?? getDefaultKode()),
-            subKel: ensureInteger(item.subKel ?? getDefaultKode()),
-            subSubKel: ensureInteger(item.subSubKel ?? getDefaultKode()),
-            jenis: ensureInteger(item.jenis ?? getDefaultKode()),
-            tipe: ensureInteger(item.tipe ?? getDefaultKode()),
-            urut: ensureInteger(item.urut ?? getDefaultKode()),
-            name: item.name ?? "",
-            merkType: item.merkType ?? "",
-            negaraPembuat: item.negaraPembuat ?? "",
-            tahunPembuatan: item.tahunPembuatan ?? "",
-            tahunPemakaian: item.tahunPemakaian ?? "",
-            jumlah: item.jumlah ?? 1,
-            satuan: item.satuan ?? "unit",
-            kondisiB: item.kondisiB ?? "",
-            rr: item.rr ?? "",
-            rb: item.rb ?? "",
-            persen: item.persen ?? persen,
-            keterangan: item.keterangan ?? "",
-            gambar: item.gambar ?? "",
-            updateTanggal: item.updateTanggal ?? today,
-            konseptor: item.konseptor ?? "",
-            subGroups: item.subGroups,
-          };
-        })
-      );
+      setItems(initialData.items.map((item: any) => {
+        const b = Number(item.kondisiB) || 0;
+        const rr = Number(item.rr) || 0;
+        const rb = Number(item.rb) || 0;
+        const persen = hitungPersen(b, rr, rb);
+        return {
+          bag: ensureInteger(item.bag ?? getDefaultKode()),
+          unsr: ensureInteger(item.unsr ?? getDefaultKode()),
+          bid: ensureInteger(item.bid ?? getDefaultKode()),
+          subBid: ensureInteger(item.subBid ?? getDefaultKode()),
+          subSubBid: ensureInteger(item.subSubBid ?? getDefaultKode()),
+          gol: ensureInteger(item.gol ?? getDefaultKode()),
+          bidKlasifikasi: ensureInteger(item.bidKlasifikasi ?? getDefaultKode()),
+          kel: ensureInteger(item.kel ?? getDefaultKode()),
+          subKel: ensureInteger(item.subKel ?? getDefaultKode()),
+          subSubKel: ensureInteger(item.subSubKel ?? getDefaultKode()),
+          jenis: ensureInteger(item.jenis ?? getDefaultKode()),
+          tipe: ensureInteger(item.tipe ?? getDefaultKode()),
+          urut: ensureInteger(item.urut ?? getDefaultKode()),
+          name: item.name ?? "",
+          merkType: item.merkType ?? "",
+          negaraPembuat: item.negaraPembuat ?? "",
+          tahunPembuatan: item.tahunPembuatan ?? "",
+          tahunPemakaian: item.tahunPemakaian ?? "",
+          jumlah: item.jumlah ?? 1,
+          satuan: item.satuan ?? "unit",
+          kondisiB: item.kondisiB ?? "",
+          rr: item.rr ?? "",
+          rb: item.rb ?? "",
+          persen: item.persen ?? persen,
+          keterangan: item.keterangan ?? "",
+          gambar: item.gambar ?? "",
+          updateTanggal: item.updateTanggal ?? today,
+          konseptor: item.konseptor ?? "",
+          subGroups: item.subGroups,
+        };
+      }));
     } else {
       setItems([createItemFromKodefikasi()]);
     }
   }, [initialData, defaultJenis, defaultTipe]);
 
   useEffect(() => {
-    setSerialNumbers((prev) => {
-      return items.map((it, idx) => {
-        const qty = Math.max(0, Number(it.jumlah) || 0);
-        const existing = prev[idx] ?? [];
-        return Array.from({ length: qty }, (_, j) => existing[j] ?? "");
-      });
-    });
+    setSerialNumbers(prev => items.map((it, idx) => {
+      const qty = Math.max(0, Number(it.jumlah) || 0);
+      const existing = prev[idx] ?? [];
+      return Array.from({ length: qty }, (_, j) => existing[j] ?? "");
+    }));
   }, [items]);
 
   useEffect(() => {
@@ -322,16 +279,7 @@ export default function TambahMateriilPage({
         const qty = item.jumlah || 0;
         const list: string[] = [];
         for (let j = 0; j < qty; j++) {
-          const payload = {
-            type: "item",
-            name: item.name,
-            merkType: item.merkType,
-            jumlah: item.jumlah,
-            satuan: item.satuan,
-            unit: j + 1,
-            serial: serialNumbers[i]?.[j] ?? "",
-            uid: crypto.randomUUID(),
-          };
+          const payload = { type: "item", name: item.name, merkType: item.merkType, jumlah: item.jumlah, satuan: item.satuan, unit: j + 1, serial: serialNumbers[i]?.[j] ?? "", uid: crypto.randomUUID() };
           list.push(await QRCode.toDataURL(JSON.stringify(payload)));
         }
         map[i] = list;
@@ -345,70 +293,44 @@ export default function TambahMateriilPage({
     const generateSetQR = async () => {
       const setMap: Record<string, string> = {};
       const compMap: Record<string, string> = {};
-
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         if (item.satuan !== "set" || !item.subGroups) continue;
-
         for (let g = 0; g < item.subGroups.length; g++) {
           const group = item.subGroups[g];
           const key = `${i}-${g}`;
-          const payload = {
-            type: "set",
-            parent: item.name,
-            setIndex: g + 1,
-            uid: crypto.randomUUID(),
-          };
+          const payload = { type: "set", parent: item.name, setIndex: g + 1, uid: crypto.randomUUID() };
           setMap[key] = await QRCode.toDataURL(JSON.stringify(payload));
-
           for (let c = 0; c < group.components.length; c++) {
             const comp = group.components[c];
             const compKey = `${i}-${g}-${c}`;
-            const compPayload = {
-              type: "component",
-              parent: item.name,
-              component: comp.name,
-              serial: comp.serialNumber,
-              uid: crypto.randomUUID(),
-            };
-            compMap[compKey] = await QRCode.toDataURL(
-              JSON.stringify(compPayload)
-            );
+            const compPayload = { type: "component", parent: item.name, component: comp.name, serial: comp.serialNumber, uid: crypto.randomUUID() };
+            compMap[compKey] = await QRCode.toDataURL(JSON.stringify(compPayload));
           }
         }
       }
-
       setQrSets(setMap);
       setQrComponents(compMap);
     };
-
     generateSetQR();
   }, [items]);
 
-  const addItem = () => {
-    setItems((prev) => [...prev, createItemFromKodefikasi()]);
-  };
-
+  const addItem = () => setItems(prev => [...prev, createItemFromKodefikasi()]);
   const removeItem = (index: number) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
-    setSerialNumbers((prev) => prev.filter((_, i) => i !== index));
+    setItems(prev => prev.filter((_, i) => i !== index));
+    setSerialNumbers(prev => prev.filter((_, i) => i !== index));
   };
 
   const updateItem = (index: number, field: keyof ItemState, value: any) => {
-    setItems((prev) => {
+    setItems(prev => {
       const updated = [...prev];
       const item = { ...updated[index] };
-
       let processedValue = value;
-      if (integerFields.includes(field)) {
-        processedValue = ensureInteger(value);
-      }
-
+      if (integerFields.includes(field)) processedValue = ensureInteger(value);
       (item as any)[field] = processedValue;
 
       if (field === "kondisiB" || field === "rr" || field === "rb") {
-        const b =
-          Number(field === "kondisiB" ? processedValue : item.kondisiB) || 0;
+        const b = Number(field === "kondisiB" ? processedValue : item.kondisiB) || 0;
         const rr = Number(field === "rr" ? processedValue : item.rr) || 0;
         const rb = Number(field === "rb" ? processedValue : item.rb) || 0;
         item.persen = hitungPersen(b, rr, rb);
@@ -416,21 +338,11 @@ export default function TambahMateriilPage({
 
       if (field === "satuan" && value === "set") {
         const qty = item.jumlah || 1;
-        item.subGroups = Array.from({ length: qty }, (_, i) => ({
-          label: `${item.name || "Set"} ${i + 1}`,
-          components: [{ name: "", jumlah: 1, serialNumber: "" }],
-        }));
+        item.subGroups = Array.from({ length: qty }, (_, i) => ({ label: `${item.name || "Set"} ${i + 1}`, components: [{ name: "", jumlah: 1, serialNumber: "" }] }));
       } else if (field === "jumlah" && item.satuan === "set") {
         const newQty = Number(value);
         const existing = item.subGroups || [];
-        const newGroups = Array.from(
-          { length: newQty },
-          (_, i) =>
-            existing[i] || {
-              label: `${item.name || "Set"} ${i + 1}`,
-              components: [{ name: "", jumlah: 1, serialNumber: "" }],
-            }
-        );
+        const newGroups = Array.from({ length: newQty }, (_, i) => existing[i] || { label: `${item.name || "Set"} ${i + 1}`, components: [{ name: "", jumlah: 1, serialNumber: "" }] });
         item.subGroups = newGroups;
       }
 
@@ -439,12 +351,8 @@ export default function TambahMateriilPage({
     });
   };
 
-  const updateSerialNumber = (
-    itemIndex: number,
-    snIndex: number,
-    value: string
-  ) => {
-    setSerialNumbers((prev) => {
+  const updateSerialNumber = (itemIndex: number, snIndex: number, value: string) => {
+    setSerialNumbers(prev => {
       const next = [...prev];
       const row = [...(next[itemIndex] || [])];
       row[snIndex] = value;
@@ -453,41 +361,29 @@ export default function TambahMateriilPage({
     });
   };
 
-  const handleImageUpload = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleImageUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      updateItem(index, "gambar", reader.result as string);
-    };
+    reader.onload = () => updateItem(index, "gambar", reader.result as string);
     reader.readAsDataURL(file);
   };
 
   const addComponentToGroup = (itemIndex: number, groupIndex: number) => {
-    setItems((prev) => {
+    setItems(prev => {
       const updated = [...prev];
       const item = { ...updated[itemIndex] };
       if (!item.subGroups) return prev;
       const group = { ...item.subGroups[groupIndex] };
-      group.components = [
-        ...group.components,
-        { name: "", jumlah: 1, serialNumber: "" },
-      ];
+      group.components = [...group.components, { name: "", jumlah: 1, serialNumber: "" }];
       item.subGroups[groupIndex] = group;
       updated[itemIndex] = item;
       return updated;
     });
   };
 
-  const removeComponentFromGroup = (
-    itemIndex: number,
-    groupIndex: number,
-    compIndex: number
-  ) => {
-    setItems((prev) => {
+  const removeComponentFromGroup = (itemIndex: number, groupIndex: number, compIndex: number) => {
+    setItems(prev => {
       const updated = [...prev];
       const item = { ...updated[itemIndex] };
       if (!item.subGroups) return prev;
@@ -499,14 +395,8 @@ export default function TambahMateriilPage({
     });
   };
 
-  const updateSubComponent = (
-    itemIndex: number,
-    groupIndex: number,
-    compIndex: number,
-    field: keyof SubComponent,
-    value: string | number
-  ) => {
-    setItems((prev) => {
+  const updateSubComponent = (itemIndex: number, groupIndex: number, compIndex: number, field: keyof SubComponent, value: string | number) => {
+    setItems(prev => {
       const updated = [...prev];
       const item = { ...updated[itemIndex] };
       if (!item.subGroups) return prev;
@@ -522,387 +412,183 @@ export default function TambahMateriilPage({
     });
   };
 
-  const handleSubmit = () => {
-    onSubmit("", "", items as MaterilItem[]);
+  const convertToPengajuanItems = (item: ItemState, snList: string[]): PengajuanItem[] => {
+    const qty = item.jumlah;
+    const result: PengajuanItem[] = [];
+    for (let u = 0; u < qty; u++) {
+      result.push({
+        id: crypto.randomUUID(),
+        bag: item.bag,
+        unsr: item.unsr,
+        bid: item.bid,
+        subBid: item.subBid,
+        subSubBid: item.subSubBid,
+        gol: item.gol,
+        bidKlasifikasi: item.bidKlasifikasi,
+        kel: item.kel,
+        subKel: item.subKel,
+        subSubKel: item.subSubKel,
+        jenis: item.jenis,
+        tipe: item.tipe,
+        urut: item.urut,
+        name: qty > 1 ? `${item.name} - ${u + 1}` : item.name,
+        merkType: item.merkType,
+        serialNumbers: [snList[u] || ""],
+        negaraPembuat: item.negaraPembuat,
+        tahunPembuatan: item.tahunPembuatan,
+        tahunPemakaian: item.tahunPemakaian,
+        jumlah: 1,
+        satuan: item.satuan,
+        kondisiB: item.kondisiB,
+        rr: item.rr,
+        rb: item.rb,
+        persen: item.persen,
+        keterangan: item.keterangan,
+        gambar: item.gambar,
+        tanggalPengajuan: new Date().toISOString().slice(0, 10),
+        status: "Menunggu",
+      });
+    }
+    return result;
+  };
+
+  const handleAjukanUsulan = () => {
+    if (!romawi.trim()) { alert("Harap isi Romawi (contoh: I, II, A)"); return; }
+    if (!title.trim()) { alert("Harap isi Judul Kelompok"); return; }
+    if (items.length === 0) { alert("Tidak ada item yang diajukan"); return; }
+
+    const allPengajuanItems: PengajuanItem[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.name.trim()) { alert(`Item #${i + 1} belum memiliki Nama Barang`); return; }
+      const sns = serialNumbers[i] || [];
+      const converted = convertToPengajuanItems(item, sns);
+      allPengajuanItems.push(...converted);
+    }
+
+    const newGroup: PengajuanGroup = { romawi: romawi.trim(), title: title.trim(), items: allPengajuanItems };
+    if (onAjukanUsulan) onAjukanUsulan(newGroup);
+    if (onBack) onBack();
+    else router.push("/pengajuan");
   };
 
   const handleCancel = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      router.back();
-    }
+    if (onBack) onBack();
+    else router.back();
   };
 
   const totalUnits = items.reduce((sum, item) => sum + item.jumlah, 0);
+  const tokenWarning = !authToken && (
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+      ⚠️ Token autentikasi tidak ditemukan. Silakan login ulang agar data identifikasi dapat dimuat.
+    </div>
+  );
 
   return (
-    <div className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
-      {/* Header */}
-      <div className="relative border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 px-5 py-4 md:px-7 md:py-5">
+    <div className="w-full rounded-2xl bg-gray-950 shadow-xl overflow-hidden transition-all duration-300">
+      {/* Header Form */}
+      <div className="relative border-b border-white/10 bg-gray-950 px-5 py-4 md:px-7 md:py-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
-            <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100 md:text-2xl flex items-center gap-2">
-              <FaClipboardList className="text-[#328E6E]" /> Form Usulan
-              Kodefikasi
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 md:text-[15px]">
-              Lengkapi data dengan struktur identifikasi, klasifikasi, dan
-              detail barang secara presisi.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                <FaBoxes className="text-[11px]" /> Total Item: {items.length}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                <FaBarcode /> Total Unit: {totalUnits}
-              </span>
+              <div className="flex flex-wrap gap-2 mt-2">
+              <span className={chipInfoClass}><FaBoxes className="text-[11px]" /> Total Item: {items.length}</span>
+              <span className={chipInfoClass}><FaBarcode /> Total Unit: {totalUnits}</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 w-full md:w-auto">
+            <div className="flex gap-2">
+              <input type="text" placeholder="Romawi (I, II, A)" value={romawi} onChange={e => setRomawi(e.target.value)} className={inputBaseClass + " w-28"} />
+              <input type="text" placeholder="Judul Kelompok" value={title} onChange={e => setTitle(e.target.value)} className={inputBaseClass + " flex-1"} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Form body */}
-      <div className="max-h-[calc(100vh-240px)] overflow-y-auto bg-slate-50/70 dark:bg-gray-900/50 px-4 py-5 md:px-7 md:py-6 custom-scrollbar">
+      {/* Scrollable content */}
+      <div className="max-h-[calc(100vh-240px)] overflow-y-auto px-4 py-5 md:px-7 md:py-6 custom-scrollbar">
         <div className="space-y-6">
+          {tokenWarning}
           {items.map((item, idx) => (
-            <div
-              key={idx}
-              className="group overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all duration-300"
-            >
-              <div className="flex flex-col gap-3 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-white to-slate-50 dark:from-gray-900 dark:to-gray-800/50 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-5">
+            <div key={idx} className={cardClass}>
+              <div className={cardHeaderClass}>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#EAF4EF] to-[#d4e8e0] dark:from-[#1E3A2F] dark:to-[#142E24] font-bold text-[#328E6E] dark:text-[#3BAF87] shadow-sm">
-                    {idx + 1}
-                  </div>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold shadow-sm">{idx + 1}</div>
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                      Item #{idx + 1}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Lengkapi seluruh komponen data barang pada item ini
-                    </p>
+                    <h3 className="text-base font-semibold text-slate-100">Item #{idx + 1}</h3>
+                    <p className="text-xs text-slate-500">Lengkapi seluruh komponen data barang pada item ini</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => removeItem(idx)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-3.5 py-2 text-sm font-medium text-red-600 dark:text-red-400 transition-all hover:border-red-300 dark:hover:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 hover:shadow-sm"
-                >
+                <button onClick={() => removeItem(idx)} className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-sm font-medium text-red-300 transition-all hover:border-red-500/50 hover:bg-red-500/20">
                   <FaTrash /> Hapus
                 </button>
               </div>
 
-              <div className="space-y-6 px-4 py-5 md:px-5 md:py-6">
-                <ButtonIdentifikasi
-                  item={item}
-                  updateItem={updateItem}
-                  idx={idx}
-                />
-
-                {/* Klasifikasi */}
-                <div className="space-y-3">
-                  <div className={sectionBadgeClass}>
-                    <FaClipboardList /> Klasifikasi
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                    {/* Dropdown GOL */}
-                    <select
-                      value={item.gol}
-                      onChange={(e) => {
-                        updateItem(idx, "gol", e.target.value);
-                        // Reset child levels
-                        updateItem(idx, "bidKlasifikasi", "0");
-                        updateItem(idx, "kel", "0");
-                        updateItem(idx, "subKel", "0");
-                        updateItem(idx, "subSubKel", "0");
-                      }}
-                      className={inputSoftClass}
-                    >
-                      <option value="0">-- Pilih GOL --</option>
-                      {getUniqueOptions("gol", {}).map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Dropdown BID - tergantung GOL */}
-                    <select
-                      value={item.bidKlasifikasi}
-                      onChange={(e) => {
-                        updateItem(idx, "bidKlasifikasi", e.target.value);
-                        updateItem(idx, "kel", "0");
-                        updateItem(idx, "subKel", "0");
-                        updateItem(idx, "subSubKel", "0");
-                      }}
-                      className={inputSoftClass}
-                      disabled={item.gol === "0"}
-                    >
-                      <option value="0">-- Pilih BID --</option>
-                      {item.gol !== "0" &&
-                        getUniqueOptions("bid", { gol: item.gol }).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                    </select>
-
-                    {/* Dropdown KEL - tergantung GOL + BID */}
-                    <select
-                      value={item.kel}
-                      onChange={(e) => {
-                        updateItem(idx, "kel", e.target.value);
-                        updateItem(idx, "subKel", "0");
-                        updateItem(idx, "subSubKel", "0");
-                      }}
-                      className={inputSoftClass}
-                      disabled={item.gol === "0" || item.bidKlasifikasi === "0"}
-                    >
-                      <option value="0">-- Pilih KEL --</option>
-                      {item.gol !== "0" &&
-                        item.bidKlasifikasi !== "0" &&
-                        getUniqueOptions("kel", {
-                          gol: item.gol,
-                          bid: item.bidKlasifikasi,
-                        }).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                    </select>
-
-                    {/* Dropdown SUB KEL - tergantung GOL + BID + KEL */}
-                    <select
-                      value={item.subKel}
-                      onChange={(e) => {
-                        updateItem(idx, "subKel", e.target.value);
-                        updateItem(idx, "subSubKel", "0");
-                      }}
-                      className={inputSoftClass}
-                      disabled={
-                        item.gol === "0" ||
-                        item.bidKlasifikasi === "0" ||
-                        item.kel === "0"
-                      }
-                    >
-                      <option value="0">-- Pilih SUB KEL --</option>
-                      {item.gol !== "0" &&
-                        item.bidKlasifikasi !== "0" &&
-                        item.kel !== "0" &&
-                        getUniqueOptions("subKel", {
-                          gol: item.gol,
-                          bid: item.bidKlasifikasi,
-                          kel: item.kel,
-                        }).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                    </select>
-
-                    {/* Dropdown SUB-SUB KEL - tergantung GOL + BID + KEL + SUB KEL */}
-                    <select
-                      value={item.subSubKel}
-                      onChange={(e) =>
-                        updateItem(idx, "subSubKel", e.target.value)
-                      }
-                      className={inputSoftClass}
-                      disabled={
-                        item.gol === "0" ||
-                        item.bidKlasifikasi === "0" ||
-                        item.kel === "0" ||
-                        item.subKel === "0"
-                      }
-                    >
-                      <option value="0">-- Pilih SUB-SUB KEL --</option>
-                      {item.gol !== "0" &&
-                        item.bidKlasifikasi !== "0" &&
-                        item.kel !== "0" &&
-                        item.subKel !== "0" &&
-                        getUniqueOptions("subSubKel", {
-                          gol: item.gol,
-                          bid: item.bidKlasifikasi,
-                          kel: item.kel,
-                          subKel: item.subKel,
-                        }).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
+              <div className={cardBodyClass}>
+                {/* Identifikasi */}
+                <div className={sectionDividerClass}>
+                  <Identifikasi />
                 </div>
 
-                {/* Jenis */}
-                <div className="space-y-3">
-                  <div className={sectionBadgeClass}>
-                    <FaBarcode /> Jenis
-                  </div>
+                {/* Klasifikasi */}
+                <div className={sectionDividerClass}>
+                  <Klasifikasi />
+                </div>
+
+                {/* Jenis, Tipe, Urutan */}
+                <div className={sectionDividerClass}>
+                  <div className={badgeSectionClass}><FaBarcode /> Jenis & Tipe</div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-1">
-                    <ButtonJenis
-                      item={item}
-                      updateItem={updateItem}
-                      idx={idx}
-                    />
+                    <ButtonJenis item={item} updateItem={updateItem} idx={idx} />
                     <ButtonTipe item={item} updateItem={updateItem} idx={idx} />
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-gray-300">
-                      Urutan
-                    </div>
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="URUT"
-                      value={item.urut}
-                      onChange={(e) => updateItem(idx, "urut", e.target.value)}
-                      className={inputNumberClass}
-                    />
+                    <div className={badgeSectionClass}>Urutan</div>
+                    <input type="number" step="1" min="0" placeholder="URUT" value={item.urut} onChange={e => updateItem(idx, "urut", e.target.value)} className={inputNumberClass} />
                   </div>
                 </div>
 
                 {/* Data Barang */}
-                <div className="space-y-3">
-                  <div className={sectionBadgeClass}>
-                    <FaBoxes /> Data Barang
-                  </div>
+                <div className={sectionDividerClass}>
+                  <div className={badgeSectionClass}><FaBoxes /> Data Barang</div>
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-                    <input
-                      placeholder="Nama Barang *"
-                      value={item.name}
-                      onChange={(e) => updateItem(idx, "name", e.target.value)}
-                      className={inputSoftClass}
-                      required
-                    />
-                    <input
-                      placeholder="Merk / Type"
-                      value={item.merkType}
-                      onChange={(e) =>
-                        updateItem(idx, "merkType", e.target.value)
-                      }
-                      className={inputSoftClass}
-                    />
-                    <input
-                      placeholder="Negara Pembuat"
-                      value={item.negaraPembuat}
-                      onChange={(e) =>
-                        updateItem(idx, "negaraPembuat", e.target.value)
-                      }
-                      className={inputSoftClass}
-                    />
-                    <select
-                      value={item.tahunPembuatan}
-                      onChange={(e) =>
-                        updateItem(idx, "tahunPembuatan", e.target.value)
-                      }
-                      className={inputSoftClass}
-                    >
-                      <option value="">-- Tahun Buat --</option>
-                      {yearOptions.map((y) => (
-                        <option key={y}>{y}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={item.tahunPemakaian}
-                      onChange={(e) =>
-                        updateItem(idx, "tahunPemakaian", e.target.value)
-                      }
-                      className={inputSoftClass}
-                    >
-                      <option value="">-- Tahun Pakai --</option>
-                      {yearOptions.map((y) => (
-                        <option key={y}>{y}</option>
-                      ))}
-                    </select>
+                    <input placeholder="Nama Barang *" value={item.name} onChange={e => updateItem(idx, "name", e.target.value)} className={inputBaseClass} required />
+                    <input placeholder="Merk / Type" value={item.merkType} onChange={e => updateItem(idx, "merkType", e.target.value)} className={inputBaseClass} />
+                    <input placeholder="Negara Pembuat" value={item.negaraPembuat} onChange={e => updateItem(idx, "negaraPembuat", e.target.value)} className={inputBaseClass} />
+                    <select value={item.tahunPembuatan} onChange={e => updateItem(idx, "tahunPembuatan", e.target.value)} className={selectClass}><option value="">-- Tahun Buat --</option>{yearOptions.map(y => <option key={y}>{y}</option>)}</select>
+                    <select value={item.tahunPemakaian} onChange={e => updateItem(idx, "tahunPemakaian", e.target.value)} className={selectClass}><option value="">-- Tahun Pakai --</option>{yearOptions.map(y => <option key={y}>{y}</option>)}</select>
                   </div>
                 </div>
 
                 {/* Satuan & Kondisi */}
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/50 p-4">
+                  <div className="rounded-2xl border border-white/10 bg-gray-950 p-4">
                     <label className={labelClass}>Satuan</label>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.jumlah}
-                        onChange={(e) =>
-                          updateItem(idx, "jumlah", Number(e.target.value))
-                        }
-                        className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm sm:w-28"
-                      />
-                      <select
-                        value={item.satuan}
-                        onChange={(e) =>
-                          updateItem(idx, "satuan", e.target.value)
-                        }
-                        className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm sm:flex-1"
-                      >
-                        <option value="unit">Unit</option>
-                        <option value="buah">Buah</option>
-                        <option value="set">Set</option>
+                      <input type="number" min="1" value={item.jumlah} onChange={e => updateItem(idx, "jumlah", Number(e.target.value))} className={inputNumberClass + " w-full sm:w-28"} />
+                      <select value={item.satuan} onChange={e => updateItem(idx, "satuan", e.target.value)} className={selectClass + " w-full sm:flex-1"}>
+                        <option value="unit">Unit</option><option value="buah">Buah</option><option value="set">Set</option>
                       </select>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/50 p-4">
+                  <div className="rounded-2xl border border-white/10 bg-gray-950 p-4">
                     <label className={labelClass}>Kondisi</label>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                      <input
-                        type="number"
-                        placeholder="B"
-                        value={item.kondisiB}
-                        onChange={(e) =>
-                          updateItem(idx, "kondisiB", e.target.value)
-                        }
-                        className={inputSoftClass}
-                      />
-                      <input
-                        type="number"
-                        placeholder="RR"
-                        value={item.rr}
-                        onChange={(e) => updateItem(idx, "rr", e.target.value)}
-                        className={inputSoftClass}
-                      />
-                      <input
-                        type="number"
-                        placeholder="RB"
-                        value={item.rb}
-                        onChange={(e) => updateItem(idx, "rb", e.target.value)}
-                        className={inputSoftClass}
-                      />
-                      <input
-                        type="text"
-                        placeholder="%"
-                        value={item.persen}
-                        readOnly
-                        className="cursor-not-allowed rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm"
-                      />
+                      <input type="number" placeholder="B" value={item.kondisiB} onChange={e => updateItem(idx, "kondisiB", e.target.value)} className={inputNumberClass} />
+                      <input type="number" placeholder="RR" value={item.rr} onChange={e => updateItem(idx, "rr", e.target.value)} className={inputNumberClass} />
+                      <input type="number" placeholder="RB" value={item.rb} onChange={e => updateItem(idx, "rb", e.target.value)} className={inputNumberClass} />
+                      <input type="text" placeholder="%" value={item.persen} readOnly className="cursor-not-allowed rounded-xl border border-white/10 bg-gray-950/50 px-3.5 py-2.5 text-sm text-slate-400" />
                     </div>
                   </div>
                 </div>
 
                 {/* Serial Numbers */}
                 {item.jumlah > 0 && (
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+                  <div className="rounded-2xl border border-white/10 bg-gray-950 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <label className={labelClass}>
-                        <FaBarcode /> Nomor Seri per Unit
-                      </label>
-                      <span className="rounded-full bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold">
-                        {item.jumlah} input
-                      </span>
+                      <label className={labelClass}><FaBarcode /> Nomor Seri per Unit</label>
+                      <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-400">{item.jumlah} input</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                       {Array.from({ length: item.jumlah }).map((_, j) => (
-                        <input
-                          key={j}
-                          type="text"
-                          placeholder={`Serial ${j + 1}`}
-                          value={serialNumbers[idx]?.[j] || ""}
-                          onChange={(e) =>
-                            updateSerialNumber(idx, j, e.target.value)
-                          }
-                          className={inputSoftClass}
-                        />
+                        <input key={j} type="text" placeholder={`Serial ${j + 1}`} value={serialNumbers[idx]?.[j] || ""} onChange={e => updateSerialNumber(idx, j, e.target.value)} className={inputBaseClass} />
                       ))}
                     </div>
                   </div>
@@ -910,121 +596,54 @@ export default function TambahMateriilPage({
 
                 {/* Keterangan & Gambar */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-                    <label className={labelClass}>
-                      <FaInfoCircle /> Keterangan
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={item.keterangan}
-                      onChange={(e) =>
-                        updateItem(idx, "keterangan", e.target.value)
-                      }
-                      className={inputSoftClass}
-                    />
+                  <div className="rounded-2xl border border-white/10 bg-gray-950 p-4">
+                    <label className={labelClass}><FaInfoCircle /> Keterangan</label>
+                    <textarea rows={3} value={item.keterangan} onChange={e => updateItem(idx, "keterangan", e.target.value)} className={textareaClass} />
                   </div>
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-                    <label className={labelClass}>
-                      <FaImage /> Gambar
-                    </label>
+                  <div className="rounded-2xl border border-white/10 bg-gray-950 p-4">
+                    <label className={labelClass}><FaImage /> Gambar</label>
                     <div className="flex flex-col gap-3">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(idx, e)}
-                        className="block w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:rounded-xl file:border-0 file:bg-[#EAF4EF] dark:file:bg-[#1E3A2F] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#328E6E] dark:file:text-[#3BAF87] hover:file:bg-[#dff0e7] dark:hover:file:bg-[#2A4D3E] transition-all"
-                      />
-                      {item.gambar && (
-                        <div className="flex items-center gap-4">
-                          <img
-                            src={item.gambar}
-                            className="h-20 w-20 rounded-2xl border border-gray-200 dark:border-gray-700 object-cover shadow-sm"
-                            alt="Preview"
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Preview gambar tersimpan.
-                          </p>
-                        </div>
-                      )}
+                      <input type="file" accept="image/*" onChange={e => handleImageUpload(idx, e)} className="block w-full text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-emerald-500/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-300 hover:file:bg-emerald-500/20" />
+                      {item.gambar && <div className="flex items-center gap-4"><img src={item.gambar} className="h-20 w-20 rounded-2xl border border-white/10 object-cover shadow-sm" alt="Preview" /><p className="text-xs text-slate-500">Preview gambar tersimpan.</p></div>}
                     </div>
                   </div>
                 </div>
 
-                {/* Tanggal Update & Konseptor */}
+                {/* Tanggal & Konseptor */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-                    <label className={labelClass}>
-                      <FaCalendarAlt /> Tanggal Update
-                    </label>
-                    <input
-                      type="date"
-                      value={item.updateTanggal}
-                      onChange={(e) =>
-                        updateItem(idx, "updateTanggal", e.target.value)
-                      }
-                      className={inputSoftClass}
-                    />
+                  <div className="rounded-2xl border border-white/10 bg-gray-950 p-4">
+                    <label className={labelClass}><FaCalendarAlt /> Tanggal Update</label>
+                    <input type="date" value={item.updateTanggal} onChange={e => updateItem(idx, "updateTanggal", e.target.value)} className={inputBaseClass} />
                   </div>
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-                    <label className={labelClass}>
-                      <FaUserCog /> Konseptor
-                    </label>
-                    <input
-                      type="text"
-                      value={item.konseptor}
-                      onChange={(e) =>
-                        updateItem(idx, "konseptor", e.target.value)
-                      }
-                      className={inputSoftClass}
-                    />
+                  <div className="rounded-2xl border border-white/10 bg-gray-950 p-4">
+                    <label className={labelClass}><FaUserCog /> Konseptor</label>
+                    <input type="text" value={item.konseptor} onChange={e => updateItem(idx, "konseptor", e.target.value)} className={inputBaseClass} />
                   </div>
                 </div>
 
-                {/* QR Item preview */}
+                {/* QR Preview */}
                 {(qrItems[idx]?.[0] || qrSets) && (
-                  <div className="flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-4">
-                    {qrItems[idx]?.[0] && (
-                      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 shadow-sm">
-                        <img
-                          src={qrItems[idx][0]}
-                          className="h-14 w-14 rounded-xl object-contain"
-                          alt="QR Item"
-                        />
-                      </div>
-                    )}
+                  <div className="flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-dashed border-white/10 bg-gray-950 p-4">
+                    {qrItems[idx]?.[0] && <div className="rounded-2xl border border-white/10 bg-gray-950 p-2 shadow-sm"><img src={qrItems[idx][0]} className="h-14 w-14 rounded-xl object-contain" alt="QR Item" /></div>}
                   </div>
                 )}
 
                 {/* Set components */}
                 {item.satuan === "set" && item.subGroups && (
-                  <div className="space-y-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-4 md:p-5">
+                  <div className="space-y-4 rounded-2xl border border-white/10 bg-gray-950 p-4 md:p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h4 className="text-sm font-semibold flex items-center gap-2">
-                          <FaBoxes /> Komponen dalam Set
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          Kelola kelompok komponen dan nomor seri masing-masing.
-                        </p>
+                        <h4 className="text-sm font-semibold flex items-center gap-2 text-slate-200"><FaBoxes /> Komponen dalam Set</h4>
+                        <p className="text-xs text-slate-500">Kelola kelompok komponen dan nomor seri masing-masing.</p>
                       </div>
-                      <span className="rounded-full bg-white dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold border">
-                        {item.subGroups.length} grup
-                      </span>
+                      <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] font-semibold text-slate-400">{item.subGroups.length} grup</span>
                     </div>
                     <div className="space-y-4">
                       {item.subGroups.map((group, gIdx) => (
-                        <div
-                          key={gIdx}
-                          className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm"
-                        >
-                          <div className="flex flex-col gap-3 border-b bg-slate-50 dark:bg-gray-800/50 px-4 py-3 md:flex-row md:items-center md:justify-between">
-                            <h5 className="text-sm font-semibold">
-                              {group.label}
-                            </h5>
-                            <button
-                              onClick={() => addComponentToGroup(idx, gIdx)}
-                              className="inline-flex items-center gap-2 rounded-xl border border-[#CFE7DA] dark:border-[#2A5A48] bg-[#EAF4EF] dark:bg-[#1E3A2F] px-3 py-2 text-sm font-medium text-[#328E6E] dark:text-[#3BAF87] hover:bg-[#dff0e7] dark:hover:bg-[#2A4D3E]"
-                            >
+                        <div key={gIdx} className="overflow-hidden rounded-2xl border border-white/10 bg-gray-950 shadow-sm">
+                          <div className="flex flex-col gap-3 border-b border-white/10 bg-gray-950 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                            <h5 className="text-sm font-semibold text-slate-200">{group.label}</h5>
+                            <button onClick={() => addComponentToGroup(idx, gIdx)} className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-300 hover:bg-emerald-500/20">
                               <FaPlus /> Tambah Komponen
                             </button>
                           </div>
@@ -1032,73 +651,13 @@ export default function TambahMateriilPage({
                             {group.components.map((comp, cIdx) => {
                               const compKey = `${idx}-${gIdx}-${cIdx}`;
                               return (
-                                <div
-                                  key={cIdx}
-                                  className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-800/30 p-3 md:grid-cols-12 md:items-center"
-                                >
-                                  <input
-                                    placeholder="Nama Komponen"
-                                    value={comp.name}
-                                    onChange={(e) =>
-                                      updateSubComponent(
-                                        idx,
-                                        gIdx,
-                                        cIdx,
-                                        "name",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="md:col-span-5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
-                                  />
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={comp.jumlah}
-                                    onChange={(e) =>
-                                      updateSubComponent(
-                                        idx,
-                                        gIdx,
-                                        cIdx,
-                                        "jumlah",
-                                        Number(e.target.value)
-                                      )
-                                    }
-                                    className="md:col-span-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
-                                  />
-                                  <input
-                                    placeholder="Serial"
-                                    value={comp.serialNumber}
-                                    onChange={(e) =>
-                                      updateSubComponent(
-                                        idx,
-                                        gIdx,
-                                        cIdx,
-                                        "serialNumber",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="md:col-span-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm"
-                                  />
+                                <div key={cIdx} className="grid grid-cols-1 gap-3 rounded-2xl border border-white/10 bg-gray-950 p-3 md:grid-cols-12 md:items-center">
+                                  <input placeholder="Nama Komponen" value={comp.name} onChange={e => updateSubComponent(idx, gIdx, cIdx, "name", e.target.value)} className={inputBaseClass + " md:col-span-5"} />
+                                  <input type="number" min="1" value={comp.jumlah} onChange={e => updateSubComponent(idx, gIdx, cIdx, "jumlah", Number(e.target.value))} className={inputNumberClass + " md:col-span-2"} />
+                                  <input placeholder="Serial" value={comp.serialNumber} onChange={e => updateSubComponent(idx, gIdx, cIdx, "serialNumber", e.target.value)} className={inputBaseClass + " md:col-span-4"} />
                                   <div className="flex items-center justify-between gap-3 md:col-span-1 md:justify-end">
-                                    {qrComponents[compKey] && (
-                                      <img
-                                        src={qrComponents[compKey]}
-                                        className="h-10 w-10 rounded-xl border object-contain"
-                                        alt="QR"
-                                      />
-                                    )}
-                                    <button
-                                      onClick={() =>
-                                        removeComponentFromGroup(
-                                          idx,
-                                          gIdx,
-                                          cIdx
-                                        )
-                                      }
-                                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-500 hover:bg-red-100"
-                                    >
-                                      <FaTrash />
-                                    </button>
+                                    {qrComponents[compKey] && <img src={qrComponents[compKey]} className="h-10 w-10 rounded-xl border border-white/10 object-contain" alt="QR" />}
+                                    <button onClick={() => removeComponentFromGroup(idx, gIdx, cIdx)} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20"><FaTrash /></button>
                                   </div>
                                 </div>
                               );
@@ -1114,63 +673,35 @@ export default function TambahMateriilPage({
           ))}
 
           {/* Tombol Tambah Barang */}
-          <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-white/10 bg-gray-950 p-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h4 className="text-sm font-semibold">Tambah Barang</h4>
-              <p className="text-xs text-gray-500">
-                Menambahkan item baru ke dalam struktur materiil.
-              </p>
+              <h4 className="text-sm font-semibold text-slate-200">Tambah Barang</h4>
+              <p className="text-xs text-slate-500">Menambahkan item baru ke dalam struktur materiil.</p>
             </div>
-            <button
-              onClick={addItem}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#328E6E] to-[#276f56] px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:from-[#276f56] hover:to-[#1e5a45]"
-            >
+            <button onClick={addItem} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-800 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-emerald-600 hover:to-emerald-700">
               <FaPlus /> Tambah Barang
             </button>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-4 md:px-7">
+      {/* Footer Actions */}
+      <div className="border-t border-white/10 bg-gray-950 px-5 py-4 md:px-7">
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button
-            onClick={handleCancel}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition-all hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm active:scale-95"
-          >
+          <button onClick={handleCancel} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-gray-950 px-5 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/5 active:scale-95">
             <FaTimes /> Batal
           </button>
-          <button
-            onClick={handleSubmit}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#328E6E] to-[#276f56] px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-[#276f56] hover:to-[#1e5a45] hover:shadow-lg active:scale-95"
-          >
-            <FaSave /> Simpan
+          <button onClick={handleAjukanUsulan} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-emerald-500 hover:to-emerald-600 hover:shadow-lg active:scale-95">
+            <FaSave /> Ajukan Usulan
           </button>
         </div>
       </div>
 
       <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-track {
-          background: #2d2d2d;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #555;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e1e1e; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #666; }
       `}</style>
     </div>
   );
